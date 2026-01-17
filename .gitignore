@@ -11,3 +11,4 @@
 
 # IDE files
 .vscode/
+/src/generated/prisma
