@@ -18,13 +18,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec ts-node src/app.ts",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "express": "^5.2.1"
   },
-  "devDependencies": { 
-    "nodemon": "^3.1.11",
+  "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/eslint__js": "^8.42.3",
     "@types/express": "^5.0.6",
@@ -35,6 +36,8 @@
     "eslint-plugin-n": "^17.23.2",
     "eslint-plugin-promise": "^7.2.1",
     "globals": "^17.0.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.8.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0"

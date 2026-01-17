@@ -3,6 +3,7 @@ import pluginImport from 'eslint-plugin-import';
 import pluginN from 'eslint-plugin-n';
 import pluginPromise from 'eslint-plugin-promise';
 import tseslint from 'typescript-eslint';
+import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -63,6 +64,7 @@ export default tseslint.config(
       'promise/catch-or-return': 'warn',
     },
   },
+  prettier,
   {
     ignores: [
       'dist/',
