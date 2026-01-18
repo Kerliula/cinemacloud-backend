@@ -12,10 +12,11 @@ class jwtUtils {
     const jti = randomBytes(16).toString('hex');
 
     const signOptions: SignOptions = {
-      expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
       ...options,
+      ...(expiresIn !== undefined
+        ? { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] }
+        : {}),
     };
-
     return jwt.sign({ ...payload, jti }, secret, signOptions);
   }
 

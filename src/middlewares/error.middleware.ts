@@ -5,7 +5,7 @@ import AppError from '../errors/app-error.ts';
 
 export const globalErrorHandler = (
   err: Error | AppError,
-  req: Request,
+  _req: Request,
   res: Response,
   _next: NextFunction
 ) => {
