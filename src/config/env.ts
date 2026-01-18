@@ -4,9 +4,15 @@ dotenv.config();
 
 export const config = {
   nodeEnv: process.env.NODE_ENV || ('development' as string),
-  port: parseInt(process.env.PORT || '3000', 10) as number,
+  port: (() => {
+    const port = parseInt(process.env.PORT || '3000', 10);
+    if (isNaN(port)) throw new Error('PORT must be a valid number');
+    return port;
+  })(),
   databaseUrl: process.env.DATABASE_URL as string,
-  corsOrigin: (process.env.CORS_ORIGIN || '*') as string,
+  corsOrigin:
+    process.env.CORS_ORIGIN ??
+    (process.env.NODE_ENV === 'development' ? '*' : ''),
   jwtSecret: process.env.JWT_SECRET as string,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN as string,
   bcryptSaltRounds: parseInt(

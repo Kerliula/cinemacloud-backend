@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 import { config } from '../config/env.ts';
 import HTTP_STATUS from '../constants/httpStatus.ts';
 import AppError from '../errors/app-error.ts';
@@ -9,24 +11,34 @@ export class AuthService {
   async register(data: RegisterRequest): Promise<AuthResponse> {
     const { email, password, username } = data;
 
-    const existingUser = await UserModel.findByEmail(email);
-    if (existingUser) {
-      throw new AppError(
-        HTTP_STATUS.CONFLICT,
-        'User with this email already exists'
-      );
+    try {
+      const hashedPassword = await bcryptUtils.hash(password);
+      const user = await UserModel.create({
+        email,
+        hashedPassword,
+        username,
+      });
+
+      // Generate token and build response
+      const token = this.generateTokenForUser(user);
+      return this.buildAuthResponse(user, token);
+    } catch (error) {
+      // Handle Prisma unique constraint error
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const prismaError = error as Prisma.PrismaClientKnownRequestError;
+        if (prismaError.code === 'P2002') {
+          throw new AppError(HTTP_STATUS.CONFLICT);
+        }
+      }
+
+      // Re-throw if it's already an AppError
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      // Throw generic error for unexpected cases
+      throw new AppError(HTTP_STATUS.INTERNAL_SERVER_ERROR);
     }
-
-    const hashedPassword = await bcryptUtils.hash(password);
-    const user = await UserModel.create({
-      email,
-      hashedPassword,
-      username,
-    });
-
-    const token = this.generateTokenForUser(user);
-
-    return this.buildAuthResponse(user, token);
   }
 
   private generateTokenForUser(user: {

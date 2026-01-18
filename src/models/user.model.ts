@@ -2,8 +2,6 @@ import prisma from '../config/database.ts';
 import type { User } from '../generated/prisma/client.ts';
 
 export class UserModel {
-  private static readonly SALT_ROUNDS = 10;
-
   static async create(data: {
     email: string;
     hashedPassword: string;
