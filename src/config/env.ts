@@ -3,13 +3,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '3000', 10),
-  databaseUrl: process.env.DATABASE_URL || '',
-  corsOrigin: process.env.CORS_ORIGIN || '*',
+  nodeEnv: process.env.NODE_ENV || ('development' as string),
+  port: parseInt(process.env.PORT || '3000', 10) as number,
+  databaseUrl: process.env.DATABASE_URL as string,
+  corsOrigin: (process.env.CORS_ORIGIN || '*') as string,
+  jwtSecret: process.env.JWT_SECRET as string,
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN as string,
+  bcryptSaltRounds: parseInt(
+    process.env.BCRYPT_SALT_ROUNDS || '10',
+    10
+  ) as number,
 } as const;
 
-const requiredEnvVars = ['DATABASE_URL'];
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'JWT_EXPIRES_IN'];
 
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
