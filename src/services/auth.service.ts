@@ -8,8 +8,9 @@ import type {
   RegisterRequest,
   AuthResponse,
   JwtPayload,
-  UserWithRoles,
+  LoginRequest,
 } from '../types/auth.types.ts';
+import type { UserWithRelations } from '../types/user.types.ts';
 import { bcryptUtils, jwtUtils } from '../utils/index.ts';
 
 export class AuthService {
@@ -41,7 +42,27 @@ export class AuthService {
     }
   }
 
-  private generateTokenForUser(user: UserWithRoles): string {
+  async login(data: LoginRequest): Promise<AuthResponse> {
+    const { email, password } = data;
+
+    const user = await UserModel.findByEmail(email);
+
+    if (!user) {
+      throw new AppError(HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
+    }
+
+    const isPasswordValid = await bcryptUtils.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new AppError(HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
+    }
+
+    const token = this.generateTokenForUser(user);
+
+    return this.buildAuthResponse(user, token);
+  }
+
+  private generateTokenForUser(user: UserWithRelations): string {
     const payload: JwtPayload = {
       id: user.id,
     };
@@ -52,7 +73,10 @@ export class AuthService {
       config.jwtExpiresIn
     );
   }
-  private buildAuthResponse(user: UserWithRoles, token: string): AuthResponse {
+  private buildAuthResponse(
+    user: UserWithRelations,
+    token: string
+  ): AuthResponse {
     return {
       user: {
         id: user.id,

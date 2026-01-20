@@ -1,3 +1,5 @@
+import type { User } from '@prisma/client';
+
 import prisma from '../config/database.ts';
 import ROLES from '../constants/roles.ts';
 import {
