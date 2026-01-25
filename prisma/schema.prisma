@@ -19,6 +19,10 @@ model User {
   password String
   username String @unique 
 
+  failedLoginAttempts Int @default(0)
+  accountLockedUntil DateTime?
+  lastLoginAt DateTime?
+
   roles Role[]
 
   createdAt DateTime @default(now())

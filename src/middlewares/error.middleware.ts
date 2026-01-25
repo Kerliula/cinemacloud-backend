@@ -10,8 +10,19 @@ export const globalErrorHandler = (
   _next: NextFunction
 ) => {
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json();
+    const response: { message: string; details?: unknown } = {
+      message: err.message,
+    };
+
+    if (err.details) {
+      response.details = err.details;
+    }
+
+    return res.status(err.statusCode).json(response);
   }
 
-  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json();
+  console.error(err);
+  res
+    .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+    .json({ message: 'Internal server error' });
 };

@@ -10,3 +10,12 @@ export interface CreateUserInput {
   password: string;
   username: string;
 }
+
+export interface UpdateUserInput {
+  email?: string;
+  password?: string;
+  username?: string;
+  failedLoginAttempts?: number;
+  accountLockedUntil?: Date | null;
+  lastLoginAt?: Date | null;
+}

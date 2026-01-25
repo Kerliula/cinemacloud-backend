@@ -35,13 +35,14 @@ app.use('/api', routes);
 app.use((_req: Request, res: Response) => {
   res.status(HTTP_STATUS.NOT_FOUND).json({
     success: false,
-    message: 'Route not found',
   });
 });
 
 // Global error handling middleware
 app.use(globalErrorHandler);
 
-app.listen(config.port);
+if (config.nodeEnv !== 'test') {
+  app.listen(config.port);
+}
 
 export default app;

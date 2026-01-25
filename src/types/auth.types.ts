@@ -34,7 +34,7 @@ export interface ChangePasswordRequest {
 // Response types
 export interface AuthResponse {
   user: UserWithRoles;
-  token: string;
+  accessToken: string;
 }
 
 // JWT Payload type
