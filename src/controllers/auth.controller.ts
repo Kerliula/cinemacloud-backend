@@ -1,0 +1,54 @@
+import type { Request, Response, NextFunction } from 'express';
+
+import HTTP_STATUS from '../constants/httpStatus.ts';
+import { perEndpointResponseTimingPolicy } from '../policies/per-endpoint-response-timing.policy.ts';
+import { prismaUserRepository } from '../repositories/prisma-user.repository.ts';
+import {
+  localAccountSecurityService,
+  localAuthService,
+} from '../services/index.ts';
+import type { RegisterRequest, LoginRequest } from '../types/auth.types.ts';
+
+export class AuthController {
+  private readonly authService;
+
+  constructor() {
+    this.authService = localAuthService(
+      localAccountSecurityService(prismaUserRepository),
+      perEndpointResponseTimingPolicy,
+      prismaUserRepository
+    );
+  }
+
+  register = async (
+    req: Request<Record<string, never>, unknown, RegisterRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const registerRequest = req.validatedData as RegisterRequest;
+      const authResponse = await this.authService.register(registerRequest);
+
+      res.status(HTTP_STATUS.CREATED).json(authResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  login = async (
+    req: Request<Record<string, never>, unknown, LoginRequest>,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const loginRequest = req.validatedData as LoginRequest;
+      const authResponse = await this.authService.login(loginRequest);
+
+      res.status(HTTP_STATUS.OK).json(authResponse);
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+
+export const authController = new AuthController();

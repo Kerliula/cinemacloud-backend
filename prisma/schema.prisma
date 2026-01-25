@@ -5,10 +5,39 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  username String @unique 
+
+  failedLoginAttempts Int @default(0)
+  accountLockedUntil DateTime?
+  lastLoginAt DateTime?
+
+  roles Role[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt 
+  
+  @@map("users")
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  name String @unique @db.VarChar(50) 
+
+  users User[]
+
+  createdAt DateTime @default(now())
+
+  @@map("roles")
 }
