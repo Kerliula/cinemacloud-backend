@@ -78,10 +78,12 @@ export class LocalAuthService implements AuthService {
 
       return this.buildAuthResponse(user, accessToken);
     } catch (error) {
-      this.handleAuthError(error, user);
+      await this.handleAuthError(error, user);
     } finally {
       await this.responseTimingPolicy.enforce(startTime, 'login');
     }
+
+    throw new Error('Unreachable code');
   }
 
   private async ensurePasswordIsValid(

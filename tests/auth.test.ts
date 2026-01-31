@@ -7,6 +7,7 @@ describe('Auth Feature Tests', () => {
   beforeAll(async () => {
     // Set test environment variables
     process.env.NODE_ENV = 'test';
+    process.env.DATABASE_URL = 'mysql://root:root@localhost:3306/cinemacloud';
     process.env.JWT_SECRET = 'test_jwt_secret';
     process.env.JWT_EXPIRES_IN = '1h';
     process.env.BCRYPT_SALT_ROUNDS = '10';
