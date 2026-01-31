@@ -1,0 +1,82 @@
+services:
+  # Define the "db" service which is our MariaDB database
+  # Using the official MariaDB image from Docker Hub, no custom Dockerfile needed.
+  db:
+    image: mariadb:12.1
+    # Add a healthcheck to monitor when the database is ready to accept connections.
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mariadb-admin ping -h localhost -u root -p$${DB_ROOT_PASSWORD}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # The restart: always option tells Docker to automatically restart the container if it stops for any reason.
+    restart: always
+    # Load environment variables from the .env file for database configuration.
+    # So node.js app and db use the same credentials from .env.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      # Expose the database port to the host machine for external access
+    ports:
+      - '${DB_PORT}:3306'
+      # Persist database data on the host machine to survive container restarts/removals.
+      # mariadb : /var/lib/mysql means use the named volume "mariadb" to store data at /var/lib/mysql inside the container.
+      # in the bottom of this file, we define the named volume "mariadb".
+      # so even if the db container is removed, the data remains in the named volume.
+    volumes:
+      - mariadb:/var/lib/mysql
+      # Connect this service to the app-tier network for communication with the app service.
+    networks:
+      - app-tier
+
+  # Define the "app" service which is our Node.js application
+  app:
+    # "." specifies the build context, i.e., the folder where the Dockerfile lives (current directory).
+    build: .
+    # The first 3000 = host port, the second 3000 = container port.
+    # This maps port 3000 of the container to port 3000 on the host machine.
+    # Without this line, the app would be inaccessible from outside the container.
+    ports:
+      - '3000:3000'
+    # Environment variables are key=value pairs that a program can read from its operating system.
+    # Node.js dotenv package reads a .env file and sets environment variables in the current process’s OS environment.
+    # Therefore we do not need dotenv package inside the container, because Docker will set the OS environment variables.
+    # Here we specify the .env file to be used for environment variables.
+    env_file:
+      - .env
+    # depends_on ensures the listed containers start before this one.
+    # Note: it does NOT wait for the services to be fully "ready".
+    # The Node app could attempt to connect before MariaDB is ready, causing connection errors.
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Mirror (:) the current directory (.) to /app in the container, so changes on host reflect in container.
+      - .:/app
+      # Since we mirroring the entire current directory, we need to exclude node_modules to avoid conflicts.
+      # This ensures node_modules inside the container is used, not the host's.
+      - /app/node_modules
+    # Override the default command to run the app in development mode.
+    command: npm run dev
+    # Connect this service to the app-tier network for communication with the db service.
+    networks:
+      - app-tier
+volumes:
+  # Define a named volume "mariadb" to persist database data.
+  mariadb:
+networks:
+  # Define a custom network "app-tier" for our services to communicate.
+  app-tier:
+    # Use the default bridge driver for this network.
+    # Other options include overlay, host, none, etc.
+    # overlay is used for multi-host networking in swarm mode.
+    # host uses the host's networking stack directly. You don't need to "map" ports.
+    # none disables all networking. Ultra-secure processing of sensitive data.
+    driver: bridge
