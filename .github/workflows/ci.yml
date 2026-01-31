@@ -12,42 +12,58 @@ jobs:
 
     services:
       mysql:
-        image: mysql:8
+        image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: testdb
+        ports:
+          - 3306:3306
+        # Options to ensure MySQL is ready before the job continues
         options: >-
-          --health-cmd "mysqladmin ping -h localhost"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # Matching the Node LTS we discussed earlier
+          cache: 'npm'
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Generate Prisma client
-      run: npx prisma generate
+      - name: Wait for MySQL
+        # This loop pings the port until it's actually open
+        run: |
+          echo "Waiting for MySQL to accept connections..."
+          until nc -z -v -w30 localhost 3306; do
+            echo "MySQL is still unavailable - sleeping..."
+            sleep 2
+          done
+          echo "MySQL is up and running!"
 
-    - name: Run database migrations
-      run: npx prisma migrate deploy
-      env:
-        DATABASE_URL: mysql://root:root@localhost:3306/testdb
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/testdb
 
-    - name: Run tests
-      run: npm test
-      env:
-        DATABASE_URL: mysql://root:root@localhost:3306/testdb
-        NODE_ENV: test
-        JWT_SECRET: test_jwt_secret
-        JWT_EXPIRES_IN: 1h
-        BCRYPT_SALT_ROUNDS: 10
+      - name: Run Database Migrations
+        # We use 'migrate deploy' for CI to apply existing migrations without creating new ones
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/testdb
+
+      - name: Run Tests
+        run: npm test
+        env:
+          DATABASE_URL: mysql://root:root@localhost:3306/testdb
+          NODE_ENV: test
+          JWT_SECRET: test_jwt_secret
+          JWT_EXPIRES_IN: 1h
+          BCRYPT_SALT_ROUNDS: 10
