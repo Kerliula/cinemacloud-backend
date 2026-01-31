@@ -1,0 +1,21 @@
+# Dependency folders (we run 'npm install' inside Docker anyway)
+node_modules
+npm-debug.log
+
+# Local secrets and environment variables
+.env
+.env.*
+
+# Version control (can be massive)
+.git
+.gitignore
+
+# Docker files (the container doesn't need to see its own recipes)
+Dockerfile
+docker-compose.yml
+.dockerignore
+Makefile
+
+# OS metadata
+.DS_Store
+Thumbs.db
