@@ -15,10 +15,10 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testdb
+          # This must match what Prisma expects
+          MYSQL_DATABASE: cinemacloud
         ports:
           - 3306:3306
-        # Options to ensure MySQL is ready before the job continues
         options: >-
           --health-cmd="mysqladmin ping"
           --health-interval=10s
@@ -32,14 +32,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Matching the Node LTS we discussed earlier
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Wait for MySQL
-        # This loop pings the port until it's actually open
+        # Prevents Prisma from running before the MySQL engine is fully initialized
         run: |
           echo "Waiting for MySQL to accept connections..."
           until nc -z -v -w30 localhost 3306; do
@@ -51,18 +51,19 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
         env:
-          DATABASE_URL: mysql://root:root@localhost:3306/testdb
+          DATABASE_URL: mysql://root:root@localhost:3306/cinemacloud
 
       - name: Run Database Migrations
-        # We use 'migrate deploy' for CI to apply existing migrations without creating new ones
+        # Applies your schema to the fresh container
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: mysql://root:root@localhost:3306/testdb
+          DATABASE_URL: mysql://root:root@localhost:3306/cinemacloud
 
       - name: Run Tests
+        # This will now find the 'cinemacloud' database and the 'roles' table
         run: npm test
         env:
-          DATABASE_URL: mysql://root:root@localhost:3306/testdb
+          DATABASE_URL: mysql://root:root@localhost:3306/cinemacloud
           NODE_ENV: test
           JWT_SECRET: test_jwt_secret
           JWT_EXPIRES_IN: 1h
