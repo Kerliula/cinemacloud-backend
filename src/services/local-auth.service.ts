@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 
 import { config } from '../config/env.ts';
 import { HTTP_STATUS, PRISMA_ERROR_CODES } from '../constants/index.ts';
@@ -12,15 +12,14 @@ import type {
   AuthService,
   ResponseTimingPolicy,
   UserRepository,
+  UserEntity,
 } from '../interfaces/index.ts';
-import { UserModel } from '../models/user.model.ts';
 import type {
   RegisterRequest,
   AuthResponse,
   JwtPayload,
   LoginRequest,
 } from '../types/auth.types.ts';
-import type { UserWithRelations } from '../types/user.types.ts';
 import { bcryptUtils, jwtUtils } from '../utils/index.ts';
 
 export class LocalAuthService implements AuthService {
@@ -44,11 +43,11 @@ export class LocalAuthService implements AuthService {
     try {
       const passwordHash = await bcryptUtils.hash(password);
 
-      // TODO: Place in repository
-      const newUser = await UserModel.create({
+      const newUser = await this.userRepository.create({
         email,
-        password: passwordHash,
         username,
+        passwordHash: passwordHash,
+        roleId: 1,
       });
 
       const accessToken = this.generateAccessTokenForUser(newUser);
@@ -63,7 +62,7 @@ export class LocalAuthService implements AuthService {
     const { email, password } = data;
     const startTime = Date.now();
 
-    let user: UserWithRelations | undefined;
+    let user: UserEntity | undefined;
 
     try {
       user = await this.userRepository.findByEmailOrFail(email);
@@ -88,9 +87,12 @@ export class LocalAuthService implements AuthService {
 
   private async ensurePasswordIsValid(
     password: string,
-    user: UserWithRelations
+    user: UserEntity
   ): Promise<void> {
-    const isPasswordValid = await bcryptUtils.compare(password, user.password);
+    const isPasswordValid = await bcryptUtils.compare(
+      password,
+      user.data.passwordHash
+    );
 
     if (!isPasswordValid) {
       throw new InvalidPasswordError();
@@ -99,7 +101,7 @@ export class LocalAuthService implements AuthService {
 
   private async handleAuthError(
     error: unknown,
-    user: UserWithRelations | undefined
+    user: UserEntity | undefined
   ): Promise<never> {
     if (error instanceof InvalidPasswordError && user) {
       await this.accountSecurityService.handleFailedLogin(user);
@@ -127,9 +129,9 @@ export class LocalAuthService implements AuthService {
     throw new AppError(HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 
-  private generateAccessTokenForUser(user: UserWithRelations): string {
+  private generateAccessTokenForUser(user: UserEntity): string {
     const payload: JwtPayload = {
-      id: user.id,
+      id: user.data.id,
     };
 
     return jwtUtils.generateToken(
@@ -140,15 +142,15 @@ export class LocalAuthService implements AuthService {
   }
 
   private buildAuthResponse(
-    user: UserWithRelations,
+    user: UserEntity,
     accessToken: string
   ): AuthResponse {
     return {
       user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        roles: user.roles,
+        id: user.data.id,
+        email: user.data.email,
+        username: user.data.username,
+        roles: user.data.roles,
       },
       accessToken,
     };
