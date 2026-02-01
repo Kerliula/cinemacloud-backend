@@ -32,7 +32,7 @@ export class LocalAccountSecurityService implements AccountSecurityService {
   public async handleFailedLogin(user: UserWithRelations): Promise<void> {
     await UserModel.incrementFailedAttempts(user.id);
 
-    const updatedUser = await this.userRepository.findById(user.id);
+    const updatedUser = await this.userRepository.findByIdOrFail(user.id);
 
     if (updatedUser.failedLoginAttempts >= this.MAX_FAILED_ATTEMPTS) {
       await UserModel.lockAccount(user.id, this.LOCK_DURATION_MS);

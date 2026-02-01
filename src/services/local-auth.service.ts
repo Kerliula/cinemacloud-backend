@@ -5,7 +5,7 @@ import { HTTP_STATUS, PRISMA_ERROR_CODES } from '../constants/index.ts';
 import {
   AppError,
   InvalidPasswordError,
-  UserNotFoundError,
+  EntityNotFoundError,
 } from '../errors/index.ts';
 import type {
   AccountSecurityService,
@@ -66,7 +66,7 @@ export class LocalAuthService implements AuthService {
     let user: UserWithRelations | undefined;
 
     try {
-      user = await this.userRepository.findByEmail(email);
+      user = await this.userRepository.findByEmailOrFail(email);
 
       // Guards
       await this.accountSecurityService.handleLoginAttempt(user);
@@ -105,7 +105,7 @@ export class LocalAuthService implements AuthService {
       await this.accountSecurityService.handleFailedLogin(user);
       throw new AppError(HTTP_STATUS.UNAUTHORIZED);
     }
-    if (error instanceof UserNotFoundError) {
+    if (error instanceof EntityNotFoundError) {
       throw new AppError(HTTP_STATUS.UNAUTHORIZED);
     }
     if (error instanceof AppError) throw error;

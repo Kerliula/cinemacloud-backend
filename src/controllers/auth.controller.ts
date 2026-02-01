@@ -2,21 +2,22 @@ import type { Request, Response, NextFunction } from 'express';
 
 import HTTP_STATUS from '../constants/httpStatus.ts';
 import { perEndpointResponseTimingPolicy } from '../policies/per-endpoint-response-timing.policy.ts';
-import { prismaUserRepository } from '../repositories/prisma-user.repository.ts';
+import { PrismaUserRepository } from '../repositories/index.ts';
 import {
   localAccountSecurityService,
   localAuthService,
 } from '../services/index.ts';
 import type { RegisterRequest, LoginRequest } from '../types/auth.types.ts';
+import { PrismaClient } from '@prisma/client';
 
 export class AuthController {
   private readonly authService;
 
   constructor() {
     this.authService = localAuthService(
-      localAccountSecurityService(prismaUserRepository),
+      localAccountSecurityService(new PrismaUserRepository(new PrismaClient())),
       perEndpointResponseTimingPolicy,
-      prismaUserRepository
+      new PrismaUserRepository(new PrismaClient())
     );
   }
 
