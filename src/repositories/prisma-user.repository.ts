@@ -30,7 +30,9 @@ export class PrismaUserRepository implements UserRepository {
 
   public async findByEmailOrFail(email: string): Promise<UserWithRelations> {
     const user = await this.findByEmail(email);
-    if (!user) throw new EntityNotFoundError('User', email);
+    // Passing email directly to EntityNotFoundError may result in user email addresses appearing in logs,
+    // which is a privacy/compliance concern (GDPR, CCPA).
+    if (!user) throw new EntityNotFoundError('User', 'email');
     return user;
   }
 

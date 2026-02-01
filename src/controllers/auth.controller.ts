@@ -1,6 +1,13 @@
 import type { Request, Response, NextFunction } from 'express';
 
 import HTTP_STATUS from '../constants/httpStatus.ts';
+
+// instead of creating multiple instances of PrismaClient,
+// we import the single instance from the config
+// so that connection pooling is managed properly
+// and we avoid exhausting database connections
+import prisma from '../config/database.ts';
+//
 import { perEndpointResponseTimingPolicy } from '../policies/per-endpoint-response-timing.policy.ts';
 import { PrismaUserRepository } from '../repositories/index.ts';
 import {
@@ -8,16 +15,17 @@ import {
   localAuthService,
 } from '../services/index.ts';
 import type { RegisterRequest, LoginRequest } from '../types/auth.types.ts';
-import { PrismaClient } from '@prisma/client';
 
 export class AuthController {
   private readonly authService;
 
   constructor() {
+    const userRepository = new PrismaUserRepository(prisma);
+
     this.authService = localAuthService(
-      localAccountSecurityService(new PrismaUserRepository(new PrismaClient())),
+      localAccountSecurityService(userRepository),
       perEndpointResponseTimingPolicy,
-      new PrismaUserRepository(new PrismaClient())
+      userRepository
     );
   }
 

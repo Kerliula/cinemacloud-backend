@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { config } from '../../src/config/env.ts';
 import { HTTP_STATUS } from '../../src/constants/index.ts';
 import AppError from '../../src/errors/app-error.ts';
-import { UserNotFoundError } from '../../src/errors/index.ts';
+import { EntityNotFoundError } from '../../src/errors/index.ts';
 import { type UserRepository } from '../../src/interfaces/index.ts';
 import { UserModel } from '../../src/models/user.model.ts';
 import { LocalAuthService } from '../../src/services/local-auth.service.ts';
@@ -37,6 +37,8 @@ describe('LocalAuthService', () => {
     mockUserRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByEmailOrFail: jest.fn(),
+      findByIdOrFail: jest.fn(),
     };
 
     mockUserModel = UserModel as jest.Mocked<typeof UserModel>;
@@ -178,7 +180,7 @@ describe('LocalAuthService', () => {
     it('should login successfully', async () => {
       const accessToken = 'jwtToken';
 
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(user);
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(user);
       (mockUserModel.isAccountStillLocked as jest.Mock).mockResolvedValue(
         false
       );
@@ -187,7 +189,7 @@ describe('LocalAuthService', () => {
 
       const result = await service.login(loginData);
 
-      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
+      expect(mockUserRepository.findByEmailOrFail).toHaveBeenCalledWith(
         loginData.email
       );
       expect(
@@ -223,8 +225,8 @@ describe('LocalAuthService', () => {
     });
 
     it('should throw error if user not found', async () => {
-      (mockUserRepository.findByEmail as jest.Mock).mockRejectedValue(
-        new UserNotFoundError()
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockRejectedValue(
+        new EntityNotFoundError('User', 'email')
       );
 
       await expect(service.login(loginData)).rejects.toThrow(AppError);
@@ -234,7 +236,7 @@ describe('LocalAuthService', () => {
     });
 
     it('should throw error if account is locked', async () => {
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(user);
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(user);
       mockAccountSecurityService.handleLoginAttempt.mockRejectedValue(
         new AppError(HTTP_STATUS.FORBIDDEN)
       );
@@ -246,7 +248,7 @@ describe('LocalAuthService', () => {
     });
 
     it('should throw error if password is invalid', async () => {
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(user);
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(user);
       (mockUserModel.isAccountStillLocked as jest.Mock).mockResolvedValue(
         false
       );
@@ -268,7 +270,7 @@ describe('LocalAuthService', () => {
       };
       const accessToken = 'jwtToken';
 
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(
         userWithExpiredLock
       );
       mockBcryptUtils.compare.mockResolvedValue(true);
@@ -299,7 +301,7 @@ describe('LocalAuthService', () => {
         accountLockedUntil: new Date(Date.now() + 10000), // Still locked
       };
 
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(
         userWithActiveLock
       );
       mockAccountSecurityService.handleLoginAttempt.mockRejectedValue(
@@ -323,7 +325,7 @@ describe('LocalAuthService', () => {
       };
       const accessToken = 'jwtToken';
 
-      (mockUserRepository.findByEmail as jest.Mock).mockResolvedValue(
+      (mockUserRepository.findByEmailOrFail as jest.Mock).mockResolvedValue(
         userWithoutLock
       );
       mockBcryptUtils.compare.mockResolvedValue(true);

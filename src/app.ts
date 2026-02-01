@@ -7,6 +7,7 @@ import express, {
 import helmet from 'helmet';
 
 import { config } from './config/env.ts';
+import prisma from './config/database.ts';
 import HTTP_STATUS from './constants/httpStatus.ts';
 import { globalErrorHandler } from './middlewares/error.middleware.ts';
 import routes from './routes/index.ts';
@@ -42,7 +43,26 @@ app.use((_req: Request, res: Response) => {
 app.use(globalErrorHandler);
 
 if (config.nodeEnv !== 'test') {
-  app.listen(config.port);
+  const server = app.listen(config.port);
+
+  // Graceful shutdown handler
+  const shutdown = async () => {
+    console.log('Shutting down gracefully...');
+    server.close(async () => {
+      await prisma.$disconnect();
+      console.log('Database disconnected');
+      process.exit(0);
+    });
+
+    // Force shutdown after 10 seconds
+    setTimeout(() => {
+      console.error('Forcing shutdown...');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 }
 
 export default app;

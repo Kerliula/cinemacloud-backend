@@ -1,3 +1,3 @@
-import { PrismaUserRepository } from '../repositories/prisma-user.repository.ts';
+import { PrismaUserRepository } from './prisma-user.repository.ts';
 
 export { PrismaUserRepository };

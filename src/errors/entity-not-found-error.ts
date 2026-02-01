@@ -4,7 +4,7 @@ import { AppError } from './app-error.ts';
 export class EntityNotFoundError extends AppError {
   constructor(entityName: string, identifier?: string | number) { 
 
-    const message = identifier 
+    const message = identifier !== undefined
       ? `${entityName} with identifier [${identifier}] not found` 
       : `${entityName} not found`;
 

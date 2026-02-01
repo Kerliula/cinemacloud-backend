@@ -13,6 +13,8 @@ describe('LocalAccountSecurityService', () => {
     mockUserRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findByEmailOrFail: jest.fn(),
+      findByIdOrFail: jest.fn(),
     };
     service = new LocalAccountSecurityService(mockUserRepository);
     mockUserModel = UserModel as jest.Mocked<typeof UserModel>;
@@ -38,7 +40,7 @@ describe('LocalAccountSecurityService', () => {
       };
 
       mockUserModel.incrementFailedAttempts.mockResolvedValue(undefined);
-      mockUserRepository.findById.mockResolvedValue({
+      mockUserRepository.findByIdOrFail.mockResolvedValue({
         ...user,
         failedLoginAttempts: 3,
       });
@@ -69,7 +71,7 @@ describe('LocalAccountSecurityService', () => {
 
       mockUserModel.incrementFailedAttempts.mockResolvedValue(undefined);
       mockUserModel.lockAccount.mockResolvedValue(undefined);
-      mockUserRepository.findById.mockResolvedValue(userAfterIncrement);
+      mockUserRepository.findByIdOrFail.mockResolvedValue(userAfterIncrement);
 
       await service.handleFailedLogin(user);
 
