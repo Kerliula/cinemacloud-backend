@@ -7,7 +7,11 @@ import type {
 // also it removes dependency on system time which can be changed externally
 // and helps to keep other parts of the system deterministic
 class LocalUserEntity implements UserEntity {
-  constructor(private props: UserData) {}
+  private props: UserData;
+
+  constructor(props: UserData) {
+    this.props = props;
+  }
 
   public get data() {
     return this.props;

@@ -7,8 +7,8 @@ import { LocalUserFactory } from '../factories/local-user.factory.ts';
 import { perEndpointResponseTimingPolicy } from '../policies/per-endpoint-response-timing.policy.ts';
 import { PrismaUserRepository } from '../repositories/index.ts';
 import {
-  localAccountSecurityService,
-  localAuthService,
+  LocalAccountSecurityService,
+  LocalAuthService,
 } from '../services/index.ts';
 import type { RegisterRequest, LoginRequest } from '../types/auth.types.ts';
 
@@ -22,8 +22,8 @@ export class AuthController {
       localUserEntityFactory
     );
 
-    this.authService = localAuthService(
-      localAccountSecurityService(userRepository),
+    this.authService = new LocalAuthService(
+      new LocalAccountSecurityService(userRepository),
       perEndpointResponseTimingPolicy,
       userRepository
     );

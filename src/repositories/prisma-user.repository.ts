@@ -16,11 +16,16 @@ type UserWithRoles = PrismaUser & { roles: Role[] };
 
 export class PrismaUserRepository implements UserRepository {
   private readonly USER_INCLUDES = { roles: true } as const;
+  private readonly db: PrismaClient;
+  private readonly userEntityFactory: UserEntityFactory;
 
   constructor(
-    private readonly db: PrismaClient,
-    private readonly userEntityFactory: UserEntityFactory
-  ) {}
+    db: PrismaClient,
+    userEntityFactory: UserEntityFactory
+  ) {
+    this.db = db;
+    this.userEntityFactory = userEntityFactory;
+  }
 
   public async findByEmail(email: string): Promise<UserEntity | null> {
     const userData = await this.db.user.findUnique({

@@ -1,4 +1,4 @@
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import { config } from '../config/env.ts';
 import { HTTP_STATUS, PRISMA_ERROR_CODES } from '../constants/index.ts';

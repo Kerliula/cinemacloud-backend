@@ -1,7 +1,7 @@
-import { type UserWithRelations } from '../types/user.types.ts';
+import type { UserEntity } from './user-entity.interface.ts';
 
 export interface AccountSecurityService {
-  handleLoginAttempt(user: UserWithRelations): Promise<void>;
-  handleFailedLogin(user: UserWithRelations): Promise<void>;
-  handleSuccessfulLogin(user: UserWithRelations): Promise<void>;
+  handleLoginAttempt(user: UserEntity): Promise<void>;
+  handleFailedLogin(user: UserEntity): Promise<void>;
+  handleSuccessfulLogin(user: UserEntity): Promise<void>;
 }
