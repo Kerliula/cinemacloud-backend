@@ -78,9 +78,15 @@ jobs:
         working-directory: src
         run: php artisan migrate --force
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: src
-        run: php artisan test
+        run: php artisan test --coverage --min=80
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          working-directory: src
+          fail_ci_if_error: false
 
   lint:
     runs-on: ubuntu-latest
