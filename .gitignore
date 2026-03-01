@@ -12,10 +12,13 @@ src/storage/logs/*.log
 src/public/hot
 src/public/hot
 src/public/storage
+src/.php-cs-fixer.cache
+src/.php-cs-fixer.dist.php
 
 # Docker
 docker-compose.prod.yml
 *.env.production   # production secrets
+
 
 # Logs
 *.log

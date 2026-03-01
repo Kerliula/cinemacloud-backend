@@ -46,3 +46,9 @@ bash:
 
 db:
 	$(COMPOSE) exec db mariadb -u $${DB_USERNAME:-cinemacloud} -p$${DB_PASSWORD:-secret} $${DB_DATABASE:-cinemacloud}
+
+lint:
+	$(COMPOSE) exec app vendor/bin/php-cs-fixer fix --dry-run --diff
+
+fix:
+	$(COMPOSE) exec app vendor/bin/php-cs-fixer fix
