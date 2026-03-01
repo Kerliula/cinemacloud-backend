@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mariadb:12
+        env:
+          MARIADB_DATABASE: cinemacloud_test
+          MARIADB_USER: cinemacloud
+          MARIADB_PASSWORD: secret
+          MARIADB_ROOT_PASSWORD: rootsecret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:8.6-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo, pdo_mysql, redis, opcache
+          coverage: xdebug
+
+      - name: Install dependencies
+        working-directory: src
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Copy environment file
+        working-directory: src
+        run: cp .env.example .env
+
+      - name: Set environment variables
+        working-directory: src
+        run: |
+          echo "APP_KEY=" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=cinemacloud_test" >> .env
+          echo "DB_USERNAME=cinemacloud" >> .env
+          echo "DB_PASSWORD=secret" >> .env
+          echo "REDIS_HOST=127.0.0.1" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          echo "CACHE_STORE=redis" >> .env
+          echo "SESSION_DRIVER=redis" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+
+      - name: Generate app key
+        working-directory: src
+        run: php artisan key:generate
+
+      - name: Run migrations
+        working-directory: src
+        run: php artisan migrate --force
+
+      - name: Run tests
+        working-directory: src
+        run: php artisan test
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+
+      - name: Install dependencies
+        working-directory: src
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHP CS Fixer
+        working-directory: src
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
