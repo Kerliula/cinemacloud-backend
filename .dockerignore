@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Laravel / PHP
+src/vendor/
+src/node_modules/
+src/storage/logs/
+src/storage/framework/cache/
+src/storage/framework/sessions/
+src/storage/framework/views/
+src/.env
+src/.env.*
+!src/.env.example
+src/bootstrap/cache/
+
+# Testing
+src/tests/
+
+# Build tools
+src/public/hot
+src/public/storage
+
+# Misc
+README.md
+Makefile
+.editorconfig
+.DS_Store
+*.log
