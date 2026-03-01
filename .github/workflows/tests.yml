@@ -53,7 +53,7 @@ jobs:
 
       - name: Copy environment file
         working-directory: src
-        run: cp .env.example .env
+        run: cp ../.env.example .env
 
       - name: Set environment variables
         working-directory: src
