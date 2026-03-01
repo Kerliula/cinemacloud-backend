@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-
+        // Remove identifying headers
+        $middleware->append(\App\Http\Middleware\RemoveServerHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
