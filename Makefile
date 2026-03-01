@@ -52,3 +52,9 @@ lint:
 
 fix:
 	$(COMPOSE) exec app vendor/bin/php-cs-fixer fix
+
+test:
+	$(COMPOSE) exec -e XDEBUG_MODE=off app vendor/bin/phpunit
+
+test-coverage:
+	$(COMPOSE) exec -e XDEBUG_MODE=coverage app vendor/bin/phpunit --coverage-html coverage
