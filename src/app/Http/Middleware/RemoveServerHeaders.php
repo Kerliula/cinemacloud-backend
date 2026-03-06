@@ -20,7 +20,7 @@ class RemoveServerHeaders
         // Remove headers that might identify the server technology
         $response->headers->remove('X-Powered-By');
         $response->headers->remove('Server');
-        
+
         return $response;
     }
 }
