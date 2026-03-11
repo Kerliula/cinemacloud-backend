@@ -65,6 +65,9 @@ RUN mkdir -p /var/www/html/storage/logs \
 # Opcache configuration for production (use a separate file for development overrides)
 COPY docker/app/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
+# Security configuration to hide PHP and server information
+COPY docker/app/security.ini /usr/local/etc/php/conf.d/security.ini
+
 EXPOSE 9000
 USER www-data
 CMD ["php-fpm"]

@@ -19,45 +19,55 @@ Tears down any existing containers/volumes, rebuilds images, starts services, an
 
 ### Container Management
 
-| Command | Description |
-|---|---|
-| `make init` | Full reset: down -v → build → up → migrate:fresh --seed |
-| `make up` | Start all containers in the background |
-| `make down` | Stop and remove containers |
-| `make down-v` | Stop and remove containers **and volumes** |
-| `make build` | Rebuild Docker images |
-| `make restart` | Restart all containers |
-| `make ps` | List running containers |
-| `make logs` | Tail logs from all containers |
+| Command        | Description                                             |
+|----------------|---------------------------------------------------------|
+| `make init`    | Full reset: down -v → build → up → migrate:fresh --seed |
+| `make up`      | Start all containers in the background                  |
+| `make down`    | Stop and remove containers                              |
+| `make down-v`  | Stop and remove containers **and volumes**              |
+| `make build`   | Rebuild Docker images                                   |
+| `make restart` | Restart all containers                                  |
+| `make ps`      | List running containers                                 |
+| `make logs`    | Tail logs from all containers                           |
 
 ### Database
 
-| Command | Description |
-|---|---|
-| `make migrate` | Run pending migrations |
+| Command              | Description                                 |
+|----------------------|---------------------------------------------|
+| `make migrate`       | Run pending migrations                      |
 | `make migrate-fresh` | Drop all tables, re-run migrations and seed |
-| `make db` | Open a MariaDB shell |
+| `make db`            | Open a MariaDB shell                        |
 
 ### Laravel
 
-| Command | Description |
-|---|---|
+| Command                      | Description                                                   |
+|------------------------------|---------------------------------------------------------------|
 | `make artisan cmd=<command>` | Run any Artisan command, e.g. `make artisan cmd="route:list"` |
-| `make tinker` | Open Laravel Tinker |
-| `make bash` | Open a shell inside the app container |
+| `make tinker`                | Open Laravel Tinker                                           |
+| `make bash`                  | Open a shell inside the app container                         |
 
 ### Code Quality
 
-| Command | Description |
-|---|---|
-| `make lint` | Check code style (dry-run) |
-| `make fix` | Fix code style issues automatically |
-| `make test` | Run PHPUnit tests |
+| Command              | Description                         |
+|----------------------|-------------------------------------|
+| `make lint`          | Check code style (dry-run)          |
+| `make fix`           | Fix code style issues automatically |
+| `make test`          | Run PHPUnit tests                   |
 | `make test-coverage` | Run tests with HTML coverage report |
+
+### IDE Support
+
+| Command           | Description                                                                        |
+|-------------------|------------------------------------------------------------------------------------|
+| `make ide-helper` | Generate IDE helper files (`_ide_helper.php`, model PHPDocs, `.phpstorm.meta.php`) |
+
+> Requires `barryvdh/laravel-ide-helper`. Run this after adding new models, facades, or service container bindings to
+> keep PhpStorm type hints accurate.
 
 ## CI/CD
 
 GitHub Actions workflow automatically runs on push/PR to `main`:
+
 - Installs dependencies
 - Sets up MariaDB and Redis
 - Runs migrations
@@ -71,4 +81,3 @@ GitHub Actions workflow automatically runs on push/PR to `main`:
 - **Redis 8.6**
 - **Nginx** (reverse proxy)
 - **Docker Compose** for orchestration
-
