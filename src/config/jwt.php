@@ -91,7 +91,7 @@ return [
     |
     */
 
-    'ttl' => env('JWT_TTL') === null ? 60 : (env('JWT_TTL') === 'null' ? null : (int) env('JWT_TTL', 60)),
+    'ttl' => (int)env('JWT_TTL', 60),
 
     /*
     |--------------------------------------------------------------------------
@@ -208,7 +208,7 @@ return [
     |
     */
 
-    'leeway' => (int) env('JWT_LEEWAY', 0),
+    'leeway' => (int)env('JWT_LEEWAY', 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -220,7 +220,7 @@ return [
     |
     */
 
-    'blacklist_enabled' => env('JWT_BLACKLIST_ENABLED', true),
+    'blacklist_enabled' => filter_var(env('JWT_BLACKLIST_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
 
     /*
     | -------------------------------------------------------------------------
@@ -235,7 +235,7 @@ return [
     |
     */
 
-    'blacklist_grace_period' => (int) env('JWT_BLACKLIST_GRACE_PERIOD', 0),
+    'blacklist_grace_period' => (int)env('JWT_BLACKLIST_GRACE_PERIOD', 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -246,7 +246,7 @@ return [
     |
     */
 
-    'show_black_list_exception' => env('JWT_SHOW_BLACKLIST_EXCEPTION', true),
+    'show_black_list_exception' => filter_var(env('JWT_SHOW_BLACKLIST_EXCEPTION', true), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------

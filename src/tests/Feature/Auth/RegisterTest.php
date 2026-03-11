@@ -15,16 +15,6 @@ class RegisterTest extends TestCase
 
     private const string ENDPOINT = '/api/auth/register';
 
-    private function validPayload(array $overrides = []): array
-    {
-        return array_merge([
-            'username' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ], $overrides);
-    }
-
     // ─── Happy Path ────────────────────────────────────────────────
 
     public function test_user_can_register_with_valid_data(): void
@@ -354,10 +344,19 @@ class RegisterTest extends TestCase
         $token = $response->json('token.access_token');
 
         $meResponse = $this->getJson('/api/auth/me', [
-            'Authorization' => "Bearer $token",
+            'Authorization' => "Bearer {$token}",
         ]);
 
-        $meResponse->assertStatus(Response::HTTP_OK);
+        $meResponse->assertSuccessful();
+    }
+
+    private function validPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'username' => 'testuser',
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ], $overrides);
     }
 }
-

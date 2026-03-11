@@ -58,3 +58,8 @@ test:
 
 test-coverage:
 	$(COMPOSE) exec -e XDEBUG_MODE=coverage app vendor/bin/phpunit --coverage-html coverage
+
+ide-helper:
+	$(COMPOSE) exec app php artisan ide-helper:generate
+	$(COMPOSE) exec app php artisan ide-helper:models --nowrite
+	$(COMPOSE) exec app php artisan ide-helper:meta

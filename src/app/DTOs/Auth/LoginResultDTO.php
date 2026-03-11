@@ -6,13 +6,12 @@ namespace App\DTOs\Auth;
 
 use App\Models\User;
 
-readonly final class RegisterResultDTO
+final readonly class LoginResultDTO
 {
     public function __construct(
-        public User     $user,
+        public User $user,
         public TokenDTO $token,
-    )
-    {
+    ) {
     }
 
     /**

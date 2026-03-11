@@ -8,15 +8,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+final class UserResource extends JsonResource
 {
+    public static $wrap = 'user';
+
     public function __construct(
-        User                    $user,
-        private readonly string $accessToken,
-        private readonly string $tokenType,
-        private readonly int    $expiresIn,
-    )
-    {
+        User $user,
+    ) {
         parent::__construct($user);
     }
 
@@ -26,12 +24,10 @@ class UserResource extends JsonResource
         $user = $this->resource;
 
         return [
-            'id' => $user->id,
-            'name' => $user->name,
+            'uuid' => $user->uuid,
+            'username' => $user->username,
             'email' => $user->email,
-            'access_token' => $this->accessToken,
-            'token_type' => $this->tokenType,
-            'expires_in' => $this->expiresIn,
+            'created_at' => $user->created_at,
         ];
     }
 }

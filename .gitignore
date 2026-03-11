@@ -4,12 +4,11 @@
 !.env.example
 
 # Laravel
+src/_ide_helper.php
+src/.phpstorm.meta.php
 src/vendor/
 src/node_modules/
 src/storage/logs/*.log
-src/node_modules/
-src/storage/logs/*.log
-src/public/hot
 src/public/hot
 src/public/storage
 src/.php-cs-fixer.cache
@@ -33,6 +32,7 @@ Thumbs.db
 
 # PHP
 *.cache
+cookies.txt
 
 # Testing
 src/.phpunit.result.cache

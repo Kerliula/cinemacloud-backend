@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DTOs;
+namespace App\DTOs\Auth;
 
 final class TokenDTO
 {
@@ -10,8 +10,7 @@ final class TokenDTO
         public string $accessToken,
         public string $tokenType,
         public int    $expiresIn,
-    )
-    {
+    ) {
     }
 
     /**

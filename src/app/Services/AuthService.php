@@ -4,48 +4,121 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Exceptions\Auth\FailedToAuthenticateException;
-use App\Exceptions\Auth\FailedToGenerateTokenException;
-use App\DTOs\TokenDTO;
+use App\DTOs\Auth\{LoginDTO, LoginResultDTO, RegisterDTO, RegisterResultDTO};
+use App\DTOs\Auth\TokenDTO;
+use App\Exceptions\Auth\
+{
+    FailedToAuthenticateException,
+    FailedToGenerateTokenException,
+    FailedToRefreshTokenException,
+};
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
-readonly final class TokenService
+final readonly class AuthService
 {
-    /**
-     * @param User $user
-     * @return TokenDTO
-     */
-    public function issueToken(User $user): TokenDTO
-    {
-        $token = Auth::login($user);
+    public const string TOKEN_TYPE = 'bearer';
 
-        if (!$token) {
-            throw FailedToGenerateTokenException::make();
+    public function __construct()
+    {
+    }
+
+    /**
+     * @throws FailedToGenerateTokenException
+     */
+    public function register(RegisterDTO $dto): RegisterResultDTO
+    {
+        $user = User::create($dto->toArray());
+        $token = $this->issueToken($user);
+
+        return new RegisterResultDTO(user: $user, token: $token);
+    }
+
+
+    /**
+     * @throws FailedToAuthenticateException
+     * @throws FailedToGenerateTokenException
+     */
+    public function login(LoginDTO $dto): LoginResultDTO
+    {
+        $this->validateCredentials($dto);
+
+        $user = Auth::getLastAttempted();
+        $token = $this->issueToken($user);
+
+        return new LoginResultDTO(user: $user, token: $token);
+    }
+
+    /**
+     */
+    public function logout(): void
+    {
+        Auth::logout();
+    }
+
+
+    /**
+     * @throws FailedToAuthenticateException
+     */
+    public function me(): User
+    {
+        try {
+            $user = Auth::userOrFail();
+        } catch (Throwable) {
+            FailedToAuthenticateException::throw();
         }
 
+        return $user;
+    }
+
+    /**
+     * @throws FailedToRefreshTokenException
+     */
+    public function refresh(): TokenDTO
+    {
+        try {
+            $token = Auth::refresh();
+        } catch (Throwable) {
+            FailedToRefreshTokenException::throw();
+        }
+
+        return $this->buildTokenDTO($token);
+    }
+
+    private function issueToken(User $user): TokenDTO
+    {
+        try {
+            $token = Auth::login($user);
+        } catch (Throwable) {
+            FailedToGenerateTokenException::throw();
+        }
+
+        return $this->buildTokenDTO($token);
+    }
+
+    private function validateCredentials(LoginDTO $dto): void
+    {
+        $credentialsAreValid = Auth::validate($dto->toArray());
+
+        if (!$credentialsAreValid) {
+            FailedToAuthenticateException::throw();
+        }
+    }
+
+    private function buildTokenDTO(string $token): TokenDTO
+    {
         return new TokenDTO(
             accessToken: $token,
-            tokenType: 'bearer',
+            tokenType: self::TOKEN_TYPE,
             expiresIn: $this->ttlInSeconds(),
         );
     }
 
-    /**
-     * @param array $credentials
-     * @return User
-     */
-    public function identifyUser(array $credentials): User
-    {
-        if (!Auth::validate($credentials)) {
-            throw FailedToAuthenticateException::make();
-        }
-
-        return Auth::getLastAttempted();
-    }
-
     private function ttlInSeconds(): int
     {
-        return Auth::factory()->getTTL() * 60;
+        $TTLInMinutes = Auth::factory()->getTTL();
+
+        return $TTLInMinutes * 60;
     }
 }
