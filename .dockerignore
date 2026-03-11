@@ -15,6 +15,7 @@ src/storage/logs/
 src/storage/framework/cache/
 src/storage/framework/sessions/
 src/storage/framework/views/
+src/storage/framework/testing/
 src/.env
 src/.env.*
 !src/.env.example

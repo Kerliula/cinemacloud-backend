@@ -3,11 +3,17 @@ COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 COMPOSE = $(COMPOSE_DEV)
 
 init:
+	cp -n .env.example .env
+	cp .env src/.env
 	$(COMPOSE) down -v
 	$(COMPOSE) build
 	$(COMPOSE) up -d
-	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
-
+	$(COMPOSE) exec -u root app composer install
+	$(COMPOSE) exec -u root app sh -c " \
+		php artisan key:generate  && \
+		php artisan jwt:secret --force && \
+		php artisan storage:link && \
+		php artisan migrate:fresh --seed --force"
 up:
 	$(COMPOSE) up -d
 
@@ -60,6 +66,6 @@ test-coverage:
 	$(COMPOSE) exec -e XDEBUG_MODE=coverage app vendor/bin/phpunit --coverage-html coverage
 
 ide-helper:
-	$(COMPOSE) exec app php artisan ide-helper:generate
-	$(COMPOSE) exec app php artisan ide-helper:models --nowrite
-	$(COMPOSE) exec app php artisan ide-helper:meta
+	$(COMPOSE) exec -u root app php artisan ide-helper:generate
+	$(COMPOSE) exec -u root app php artisan ide-helper:models --nowrite
+	$(COMPOSE) exec -u root app php artisan ide-helper:meta

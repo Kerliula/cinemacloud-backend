@@ -3,9 +3,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/app/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.5}
     restart: unless-stopped
-    env_file:
-      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -15,7 +15,7 @@ services:
       - app-network
 
   nginx:
-    image: nginx:1.29-alpine
+    image: nginx:${NGINX_VERSION:-1.29}-alpine
     restart: unless-stopped
     ports:
       - "${NGINX_PORT:-8080}:80"
@@ -27,7 +27,7 @@ services:
       - app-network
 
   redis:
-    image: redis:8.6-alpine
+    image: redis:${REDIS_VERSION:-8.6}-alpine
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
@@ -38,13 +38,13 @@ services:
       - app-network
 
   mailpit:
-    image: axllent/mailpit:v1.22
+    image: axllent/mailpit:${MAILPIT_VERSION:-v1.22}
     restart: unless-stopped
     networks:
       - app-network
 
   db:
-    image: mariadb:12
+    image: mariadb:${MARIADB_VERSION:-12}
     restart: unless-stopped
     ports:
       - "${DB_PORT:-3306}:3306"

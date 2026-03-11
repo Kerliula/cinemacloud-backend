@@ -50,8 +50,6 @@ final readonly class AuthService
         return new LoginResultDTO(user: $user, token: $token);
     }
 
-    /**
-     */
     public function logout(): void
     {
         Auth::logout();

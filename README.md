@@ -1,11 +1,10 @@
 # CinemaCloud — Backend
 
-Laravel 11 REST API running in Docker (PHP-FPM + Nginx + MariaDB + Redis).
+Laravel 12 REST API running in Docker (PHP-FPM + Nginx + MariaDB + Redis).
 
 ## Requirements
-
 - Docker & Docker Compose
-- A `.env` file in the project root (copy from `.env.example` and configure)
+- A `.env` file in the project root (copy from `.env.example` and configure) — created automatically when running `make init`
 
 ## Quick start
 
@@ -13,7 +12,7 @@ Laravel 11 REST API running in Docker (PHP-FPM + Nginx + MariaDB + Redis).
 make init
 ```
 
-Tears down any existing containers/volumes, rebuilds images, starts services, and runs a fresh migration with seed data.
+Tears down any existing containers/volumes, rebuilds images, starts services, generates the app key, JWT secret, links storage, and runs a fresh migration with seed data. The `.env` file is automatically copied from `.env.example` if it doesn't exist yet.
 
 ## Makefile commands
 
@@ -75,8 +74,8 @@ GitHub Actions workflow automatically runs on push/PR to `main`:
 
 ## Tech Stack
 
-- **PHP 8.4** with OPcache, Xdebug
-- **Laravel 11**
+- **PHP 8.5** with OPcache, Xdebug
+- **Laravel 12**
 - **MariaDB 12**
 - **Redis 8.6**
 - **Nginx** (reverse proxy)

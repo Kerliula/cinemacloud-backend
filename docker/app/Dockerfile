@@ -1,7 +1,8 @@
 # ================================
 # Stage 1 - Builder (thrown away)
 # ================================
-FROM php:8.4-fpm-alpine AS builder
+ARG PHP_VERSION=${PHP_VERSION}
+FROM php:${PHP_VERSION}-fpm-alpine AS builder
 
 # Install build-time tools only
 RUN apk add --no-cache \
@@ -30,13 +31,14 @@ RUN composer dump-autoload --optimize --no-dev \
 # ================================
 # Stage 2 - Final clean image
 # ================================
-FROM php:8.4-fpm-alpine AS base
+FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 ARG INSTALL_XDEBUG=false
 
 # Only install PHP extensions needed at runtime
+# Note: opcache is built-in and enabled by default in PHP 8.5+
 RUN apk add --no-cache $PHPIZE_DEPS \
-    && docker-php-ext-install pdo pdo_mysql opcache \
+    && docker-php-ext-install pdo pdo_mysql \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && if [ "$INSTALL_XDEBUG" = "true" ]; then \
@@ -46,6 +48,9 @@ RUN apk add --no-cache $PHPIZE_DEPS \
     fi \
     && apk del $PHPIZE_DEPS \
     && rm -rf /var/cache/apk/* /tmp/pear
+
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
