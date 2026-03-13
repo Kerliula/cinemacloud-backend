@@ -2,6 +2,15 @@
 
 Laravel 12 REST API running in Docker (PHP-FPM + Nginx + MariaDB + Redis).
 
+## Getting Started
+
+Clone the repository to your local machine:
+
+```bash
+git clone https://github.com/Kerliula/cinemacloud-backend.git
+cd cinemacloud-backend
+```
+
 ## Requirements
 - Docker & Docker Compose
 - A `.env` file in the project root (copy from `.env.example` and configure) — created automatically when running `make init`
