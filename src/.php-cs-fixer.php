@@ -64,8 +64,10 @@ return (new PhpCsFixer\Config())
         'is_null' => true,                                // $x === null instead of is_null($x)
         'no_alias_functions' => true,                     // use modern function names
     ])
+    ->setUsingCache(false)
     ->setFinder(
         Finder::create()
             ->in(__DIR__)
             ->exclude(['vendor', 'node_modules', 'storage', 'bootstrap/cache'])
+            ->notName(['_ide_helper.php', '_ide_helper_models.php', '.phpstorm.meta.php'])
     );
