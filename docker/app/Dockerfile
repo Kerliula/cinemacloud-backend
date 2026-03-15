@@ -30,7 +30,6 @@ RUN composer dump-autoload --optimize --no-dev \
 # ================================
 FROM php:${PHP_VERSION}-fpm-alpine AS base
 
-ARG INSTALL_XDEBUG=false
 ARG WWWUSER=1000
 ARG WWWGROUP=1000
 
