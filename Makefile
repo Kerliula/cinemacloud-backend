@@ -5,8 +5,8 @@ COMPOSE = $(COMPOSE_DEV)
 init:
 	cp -n .env.example .env
 	cp .env src/.env
-	$(COMPOSE) down -v
-	$(COMPOSE) build
+	$(COMPOSE) down -v --rmi all --remove-orphans
+	$(COMPOSE) build --no-cache --pull
 	$(COMPOSE) up -d
 	$(COMPOSE) exec -u root app composer install
 	$(COMPOSE) exec -u root app sh -c " \
