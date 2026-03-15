@@ -23,6 +23,8 @@ make init
 
 Tears down any existing containers/volumes, rebuilds images, starts services, generates the app key, JWT secret, links storage, and runs a fresh migration with seed data. The `.env` file is automatically copied from `.env.example` if it doesn't exist yet.
 
+Once running, the API is available at **http://localhost:8080/api/**
+
 ## Makefile commands
 
 ### Container Management
