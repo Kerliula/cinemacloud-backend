@@ -91,3 +91,11 @@ GitHub Actions workflow automatically runs on push/PR to `main`:
 - **Redis 8.6**
 - **Nginx** (reverse proxy)
 - **Docker Compose** for orchestration
+
+## Contributing
+
+This is a personal learning project and pull requests are not accepted. If you find a bug or have a suggestion, feel free to [open an issue](https://github.com/Kerliula/cinemacloud-backend/issues) or fork the repository and build on it yourself.
+
+## License
+
+This project is open-sourced under the [MIT License](LICENSE).
