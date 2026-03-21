@@ -4,7 +4,6 @@ COMPOSE = $(COMPOSE_DEV)
 
 init:
 	cp -n .env.example .env
-	cp .env src/.env
 	$(COMPOSE) down -v --rmi all --remove-orphans
 	$(COMPOSE) build --no-cache --pull
 	$(COMPOSE) up -d

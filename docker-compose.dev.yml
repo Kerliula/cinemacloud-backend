@@ -8,6 +8,7 @@ services:
       - ./src:/var/www/html
       - ./docker/app/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
       - ./docker/app/xdebug.ini:/usr/local/etc/php/conf.d/zz-xdebug.ini
+      - ./.env:/var/www/html/.env
     environment:
       PHP_IDE_CONFIG: "serverName=${APP_NAME}"
   nginx:
