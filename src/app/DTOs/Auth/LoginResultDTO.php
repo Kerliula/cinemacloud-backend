@@ -15,7 +15,7 @@ final readonly class LoginResultDTO
     }
 
     /**
-     * @return array{user: User, token: array{access_token: string, token_type: string, expires_in: int}}
+     * @return array{user: User, token: TokenDTO}
      */
     public function toArray(): array
     {

@@ -9,13 +9,13 @@ use App\Models\User;
 final readonly class RegisterResultDTO
 {
     public function __construct(
-        public User     $user,
+        public User $user,
         public TokenDTO $token,
     ) {
     }
 
     /**
-     * @return array{user: User, token: array{access_token: string, token_type: string, expires_in: int}}
+     * @return array{user: User, token: TokenDTO}
      */
     public function toArray(): array
     {

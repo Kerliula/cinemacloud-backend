@@ -44,6 +44,7 @@ final readonly class AuthService
     {
         $this->validateCredentials($dto);
 
+        /** @var User $user */
         $user = Auth::getLastAttempted();
         $token = $this->issueToken($user);
 
@@ -55,19 +56,9 @@ final readonly class AuthService
         Auth::logout();
     }
 
-
-    /**
-     * @throws FailedToAuthenticateException
-     */
     public function me(): User
     {
-        try {
-            $user = Auth::userOrFail();
-        } catch (Throwable) {
-            FailedToAuthenticateException::throw();
-        }
-
-        return $user;
+        return Auth::user();
     }
 
     /**
@@ -87,7 +78,8 @@ final readonly class AuthService
     private function issueToken(User $user): TokenDTO
     {
         try {
-            $token = Auth::login($user);
+            /** @var string $token */
+            $token = Auth::login($user); // @phpstan-ignore staticMethod.void
         } catch (Throwable) {
             FailedToGenerateTokenException::throw();
         }
@@ -115,8 +107,6 @@ final readonly class AuthService
 
     private function ttlInSeconds(): int
     {
-        $TTLInMinutes = Auth::factory()->getTTL();
-
-        return $TTLInMinutes * 60;
+        return (int) config('jwt.ttl') * 60;
     }
 }

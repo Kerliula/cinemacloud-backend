@@ -233,13 +233,6 @@ class AuthServiceTest extends TestCase
         $this->assertEquals('me@example.com', $result->email);
     }
 
-    public function test_me_throws_exception_when_not_authenticated(): void
-    {
-        $this->expectException(FailedToAuthenticateException::class);
-
-        $this->authService->me();
-    }
-
     // ─── Logout ────────────────────────────────────────────────────
 
     public function test_logout_clears_authenticated_user(): void

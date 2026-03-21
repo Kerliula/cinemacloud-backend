@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class FailedToAuthenticateException extends AuthException
 {
-    public static function throw(): self
+    public static function throw(): never
     {
         throw new self(__('auth.unauthenticated'), Response::HTTP_UNAUTHORIZED);
     }

@@ -15,6 +15,8 @@ final readonly class LoginDTO
     }
 
     /**
+     * @param LoginRequest $request
+     * @return self
      */
     public static function fromRequest(LoginRequest $request): self
     {
@@ -26,7 +28,7 @@ final readonly class LoginDTO
     }
 
     /**
-     * @return array{username: string, email: string, password: string}
+     * @return array{email: string, password: string}
      */
     public function toArray(): array
     {
