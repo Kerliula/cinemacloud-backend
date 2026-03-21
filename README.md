@@ -58,12 +58,14 @@ Once running, the API is available at **http://localhost:8080/api/**
 
 ### Code Quality
 
-| Command              | Description                         |
-|----------------------|-------------------------------------|
-| `make lint`          | Check code style (dry-run)          |
-| `make fix`           | Fix code style issues automatically |
-| `make test`          | Run PHPUnit tests                   |
-| `make test-coverage` | Run tests with HTML coverage report |
+| Command              | Description                                                  |
+|----------------------|--------------------------------------------------------------|
+| `make lint`          | Check code style (dry-run, PHP CS Fixer)                     |
+| `make fix`           | Fix code style issues automatically                          |
+| `make analyse`       | Run PHPStan static analysis (level 5)                        |
+| `make baseline`      | Generate / refresh PHPStan baseline (`phpstan-baseline.neon`) |
+| `make test`          | Run PHPUnit tests                                            |
+| `make test-coverage` | Run tests with HTML coverage report                          |
 
 ### IDE Support
 
@@ -76,12 +78,16 @@ Once running, the API is available at **http://localhost:8080/api/**
 
 ## CI/CD
 
-GitHub Actions workflow automatically runs on push/PR to `main`:
+GitHub Actions (`.github/workflows/tests.yml`) runs automatically on every push and pull request to `main`.
+Three parallel jobs are executed:
 
-- Installs dependencies
-- Sets up MariaDB and Redis
-- Runs migrations
-- Executes PHPUnit tests
+| Job | What it does |
+|-----|-------------|
+| **tests** | Spins up MariaDB + Redis, runs migrations, executes PHPUnit with coverage (min 80%), uploads report to Codecov |
+| **lint** | Runs PHP CS Fixer in dry-run mode to enforce code style |
+| **PHPStan** | Runs static analysis (Larastan, level 5) — no database required |
+
+All three jobs must pass before a PR can be merged.
 
 ## Tech Stack
 

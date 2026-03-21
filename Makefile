@@ -58,6 +58,12 @@ lint:
 fix:
 	$(COMPOSE) exec app vendor/bin/php-cs-fixer fix
 
+analyse:
+	$(COMPOSE) exec app vendor/bin/phpstan analyse --memory-limit=512M
+
+baseline:
+	$(COMPOSE) exec app vendor/bin/phpstan analyse --generate-baseline --memory-limit=512M
+
 test:
 	$(COMPOSE) exec -e XDEBUG_MODE=off app vendor/bin/phpunit
 
