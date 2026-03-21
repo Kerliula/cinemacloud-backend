@@ -15,8 +15,6 @@ final readonly class LoginDTO
     }
 
     /**
-     * @param LoginRequest $request
-     * @return self
      */
     public static function fromRequest(LoginRequest $request): self
     {

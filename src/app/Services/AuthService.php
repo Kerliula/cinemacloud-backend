@@ -67,6 +67,7 @@ final readonly class AuthService
     public function refresh(): TokenDTO
     {
         try {
+            /** @var string $token */
             $token = Auth::refresh();
         } catch (Throwable) {
             FailedToRefreshTokenException::throw();
