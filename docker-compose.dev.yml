@@ -9,8 +9,10 @@ services:
       - ./docker/app/opcache-dev.ini:/usr/local/etc/php/conf.d/zz-opcache.ini
       - ./docker/app/xdebug.ini:/usr/local/etc/php/conf.d/zz-xdebug.ini
       - ./.env:/var/www/html/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      PHP_IDE_CONFIG: "serverName=${APP_NAME}"
+      PHP_IDE_CONFIG: "serverName=docker"
   nginx:
     volumes:
       - ./src/public:/var/www/html/public
