@@ -10,10 +10,12 @@ use App\DTOs\Auth\RegisterDTO;
 use App\DTOs\Auth\RegisterResultDTO;
 use App\DTOs\Auth\TokenDTO;
 use App\Exceptions\Auth\FailedToAuthenticateException;
+use App\Exceptions\Auth\FailedToGenerateTokenException;
 use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use RuntimeException;
 use Tests\TestCase;
 
 class AuthServiceTest extends TestCase
@@ -304,6 +306,23 @@ class AuthServiceTest extends TestCase
     public function test_token_type_constant_is_bearer(): void
     {
         $this->assertEquals('bearer', AuthService::TOKEN_TYPE);
+    }
+
+    // ─── issueToken exception path ─────────────────────────────────
+
+    public function test_register_throws_failed_to_generate_token_when_auth_login_fails(): void
+    {
+        Auth::shouldReceive('login')->andThrow(new RuntimeException('JWT failure'));
+
+        $dto = new RegisterDTO(
+            username: 'testuser',
+            email: 'test@example.com',
+            password: 'password123',
+        );
+
+        $this->expectException(FailedToGenerateTokenException::class);
+
+        $this->authService->register($dto);
     }
 
     protected function setUp(): void

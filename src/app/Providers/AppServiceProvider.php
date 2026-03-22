@@ -18,10 +18,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Scramble::configure()
+            // @codeCoverageIgnoreStart
             ->withDocumentTransformers(function (OpenApi $openApi): void {
                 $openApi->secure(
                     SecurityScheme::http('bearer', 'JWT'),
                 );
             });
+        // @codeCoverageIgnoreEnd
     }
 }

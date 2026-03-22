@@ -32,6 +32,7 @@ FROM php:${PHP_VERSION}-fpm-alpine AS base
 
 ARG WWWUSER=1000
 ARG WWWGROUP=1000
+ARG INSTALL_XDEBUG=false
 
 RUN apk add --no-cache $PHPIZE_DEPS shadow \
     && docker-php-ext-install pdo pdo_mysql \
