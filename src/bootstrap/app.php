@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Exceptions\Auth\AuthException;
-use App\Http\Middleware\{RateLimitByEmailAndIp, RemoveServerHeaders};
+use App\Http\Middleware\{EnsureIsAdmin, RateLimitByEmailAndIp, RemoveServerHeaders};
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\{Exceptions, Middleware};
 use Illuminate\Http\JsonResponse;
@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'throttle.auth' => RateLimitByEmailAndIp::class,
+            'require.admin' => EnsureIsAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
