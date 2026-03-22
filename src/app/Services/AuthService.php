@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\DTOs\Auth\{LoginDTO, LoginResultDTO, RegisterDTO, RegisterResultDTO};
-use App\DTOs\Auth\TokenDTO;
-use App\Exceptions\Auth\
-{
+use App\DTOs\Auth\{AuthResultDTO, LoginDTO, RegisterDTO, TokenDTO};
+use App\Exceptions\Auth\{
     FailedToAuthenticateException,
     FailedToGenerateTokenException,
     FailedToRefreshTokenException,
@@ -27,20 +25,19 @@ final readonly class AuthService
     /**
      * @throws FailedToGenerateTokenException
      */
-    public function register(RegisterDTO $dto): RegisterResultDTO
+    public function register(RegisterDTO $dto): AuthResultDTO
     {
         $user = User::create($dto->toArray());
         $token = $this->issueToken($user);
 
-        return new RegisterResultDTO(user: $user, token: $token);
+        return new AuthResultDTO(user: $user, token: $token);
     }
-
 
     /**
      * @throws FailedToAuthenticateException
      * @throws FailedToGenerateTokenException
      */
-    public function login(LoginDTO $dto): LoginResultDTO
+    public function login(LoginDTO $dto): AuthResultDTO
     {
         $this->validateCredentials($dto);
 
@@ -48,7 +45,7 @@ final readonly class AuthService
         $user = Auth::getLastAttempted();
         $token = $this->issueToken($user);
 
-        return new LoginResultDTO(user: $user, token: $token);
+        return new AuthResultDTO(user: $user, token: $token);
     }
 
     public function logout(): void

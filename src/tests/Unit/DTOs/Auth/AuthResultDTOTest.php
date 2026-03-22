@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\DTOs\Auth;
 
-use App\DTOs\Auth\LoginResultDTO;
+use App\DTOs\Auth\AuthResultDTO;
 use App\DTOs\Auth\TokenDTO;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
 use Tests\TestCase;
 
-class LoginResultDTOTest extends TestCase
+class AuthResultDTOTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -20,7 +20,7 @@ class LoginResultDTOTest extends TestCase
         $user = User::factory()->create();
         $token = new TokenDTO(accessToken: 'abc', tokenType: 'bearer', expiresIn: 3600);
 
-        $dto = new LoginResultDTO(user: $user, token: $token);
+        $dto = new AuthResultDTO(user: $user, token: $token);
 
         $this->assertSame($user, $dto->user);
         $this->assertSame($token, $dto->token);
@@ -31,7 +31,7 @@ class LoginResultDTOTest extends TestCase
         $user = User::factory()->create();
         $token = new TokenDTO(accessToken: 'abc', tokenType: 'bearer', expiresIn: 3600);
 
-        $dto = new LoginResultDTO(user: $user, token: $token);
+        $dto = new AuthResultDTO(user: $user, token: $token);
         $array = $dto->toArray();
 
         $this->assertArrayHasKey('user', $array);
@@ -41,7 +41,7 @@ class LoginResultDTOTest extends TestCase
 
     public function test_is_readonly(): void
     {
-        $reflection = new ReflectionClass(LoginResultDTO::class);
+        $reflection = new ReflectionClass(AuthResultDTO::class);
         $this->assertTrue($reflection->isReadOnly());
     }
 }

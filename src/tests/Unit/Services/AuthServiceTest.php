@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTOs\Auth\AuthResultDTO;
 use App\DTOs\Auth\LoginDTO;
-use App\DTOs\Auth\LoginResultDTO;
 use App\DTOs\Auth\RegisterDTO;
-use App\DTOs\Auth\RegisterResultDTO;
 use App\DTOs\Auth\TokenDTO;
 use App\Exceptions\Auth\FailedToAuthenticateException;
 use App\Exceptions\Auth\FailedToGenerateTokenException;
@@ -26,7 +25,7 @@ class AuthServiceTest extends TestCase
 
     // ─── Register ──────────────────────────────────────────────────
 
-    public function test_register_returns_register_result_dto(): void
+    public function test_register_returns_auth_result_dto(): void
     {
         $dto = new RegisterDTO(
             username: 'testuser',
@@ -36,7 +35,7 @@ class AuthServiceTest extends TestCase
 
         $result = $this->authService->register($dto);
 
-        $this->assertInstanceOf(RegisterResultDTO::class, $result);
+        $this->assertInstanceOf(AuthResultDTO::class, $result);
     }
 
     public function test_register_result_contains_user_and_token(): void
@@ -137,7 +136,7 @@ class AuthServiceTest extends TestCase
 
         $result = $this->authService->login($dto);
 
-        $this->assertInstanceOf(LoginResultDTO::class, $result);
+        $this->assertInstanceOf(AuthResultDTO::class, $result);
     }
 
     public function test_login_result_contains_user_and_token(): void

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\DTOs\Auth\{LoginDTO, RegisterDTO};
+use App\DTOs\Auth\{LoginDTO, RegisterDTO, TokenDTO};
 use App\Http\Requests\Auth\{LoginRequest, RegisterRequest};
 use App\Http\Resource\UserResource;
+use App\Models\User;
 use App\Services\AuthService;
-use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -29,12 +29,13 @@ final readonly class AuthController
      */
     public function register(RegisterRequest $request): UserResource
     {
-        $payload = $this->authService->register(
-            RegisterDTO::fromRequest($request),
-        );
+        $credentials = RegisterDTO::fromRequest($request);
+        $authResult = $this->authService->register($credentials);
 
-        return new UserResource($payload->user)
-            ->additional(['token' => $payload->token->toArray()]);
+        return $this->buildAuthenticatedResponse(
+            user: $authResult->user,
+            token: $authResult->token,
+        );
     }
 
     /**
@@ -46,12 +47,13 @@ final readonly class AuthController
      */
     public function login(LoginRequest $request): UserResource
     {
-        $payload = $this->authService->login(
-            LoginDTO::fromRequest($request),
-        );
+        $credentials = LoginDTO::fromRequest($request);
+        $authResult = $this->authService->login($credentials);
 
-        return new UserResource($payload->user)
-            ->additional(['token' => $payload->token->toArray()]);
+        return $this->buildAuthenticatedResponse(
+            user: $authResult->user,
+            token: $authResult->token,
+        );
     }
 
     /**
@@ -73,9 +75,9 @@ final readonly class AuthController
      */
     public function me(): UserResource
     {
-        $payload = $this->authService->me();
-
-        return new UserResource($payload);
+        return new UserResource(
+            $this->authService->me(),
+        );
     }
 
     /**
@@ -83,10 +85,15 @@ final readonly class AuthController
      *
      * Returns a new JWT access token, invalidating the previous one.
      */
-    public function refresh(): JsonResponse
+    public function refresh(): Response
     {
-        $payload = $this->authService->refresh();
+        return response()->json(
+            $this->authService->refresh()->toArray(),
+        );
+    }
 
-        return response()->json($payload->toArray());
+    private function buildAuthenticatedResponse(User $user, TokenDTO $token): UserResource
+    {
+        return new UserResource($user)->additional(['token' => $token->toArray()]);
     }
 }
