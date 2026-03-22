@@ -7,12 +7,13 @@ init:
 	$(COMPOSE) down -v --rmi all --remove-orphans
 	$(COMPOSE) build --no-cache --pull
 	$(COMPOSE) up -d
-	$(COMPOSE) exec -u root app composer install
-	$(COMPOSE) exec -u root app sh -c " \
+	$(COMPOSE) exec -u www-data app composer install
+	$(COMPOSE) exec -u www-data app sh -c " \
 		php artisan key:generate  && \
 		php artisan jwt:secret --force && \
 		php artisan storage:link && \
 		php artisan migrate:fresh --seed --force"
+	$(COMPOSE) exec -u root app chown -R www-data:www-data /var/www/html
 up:
 	$(COMPOSE) up -d
 
@@ -71,6 +72,11 @@ test-coverage:
 	$(COMPOSE) exec -e XDEBUG_MODE=coverage app vendor/bin/phpunit --coverage-html coverage
 
 ide-helper:
-	$(COMPOSE) exec -u root app php artisan ide-helper:generate
-	$(COMPOSE) exec -u root app php artisan ide-helper:models --nowrite
-	$(COMPOSE) exec -u root app php artisan ide-helper:meta
+	$(COMPOSE) exec -u root app sh -c " \
+		php artisan ide-helper:generate && \
+		php artisan ide-helper:models --nowrite && \
+		php artisan ide-helper:meta && \
+		chown -R www-data:www-data /var/www/html"
+
+telescope-clear:
+	$(COMPOSE) exec app php artisan telescope:clear
