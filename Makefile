@@ -4,17 +4,21 @@ COMPOSE = $(COMPOSE_DEV)
 
 init:
 	cp -n .env.example .env
+	cp .env src/.env
 	$(COMPOSE) down -v --rmi all --remove-orphans
 	$(COMPOSE) build --no-cache --pull
 	$(COMPOSE) up -d
+	rm -rf src/vendor
 	$(COMPOSE) exec -u www-data app composer install
 	$(COMPOSE) exec -u www-data app sh -c " \
 		php artisan migrate:fresh --seed --force && \
 		php artisan key:generate && \
 		php artisan jwt:secret --force && \
 		php artisan storage:link --force"
+	cp src/.env .env
 	$(COMPOSE) exec -u root app chown -R www-data:www-data /var/www/html
 up:
+	cp .env src/.env
 	$(COMPOSE) up -d
 
 down:
