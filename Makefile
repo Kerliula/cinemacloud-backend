@@ -9,10 +9,10 @@ init:
 	$(COMPOSE) up -d
 	$(COMPOSE) exec -u www-data app composer install
 	$(COMPOSE) exec -u www-data app sh -c " \
-		php artisan key:generate  && \
+		php artisan migrate:fresh --seed --force && \
+		php artisan key:generate && \
 		php artisan jwt:secret --force && \
-		php artisan storage:link && \
-		php artisan migrate:fresh --seed --force"
+		php artisan storage:link --force"
 	$(COMPOSE) exec -u root app chown -R www-data:www-data /var/www/html
 up:
 	$(COMPOSE) up -d

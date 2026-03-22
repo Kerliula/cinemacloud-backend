@@ -6,18 +6,33 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
 use Laravel\Telescope\TelescopeApplicationServiceProvider;
+use Throwable;
 
 class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 {
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        parent::boot();
+
+        if (! $this->telescopeMigrationsRan()) {
+            Telescope::stopRecording();
+        }
+    }
+
     /**
      * Register any application services.
      */
     public function register(): void
     {
         // Telescope::night();
+
 
         $this->hideSensitiveRequestDetails();
 
@@ -31,6 +46,18 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                    $entry->isScheduledTask() ||
                    $entry->hasMonitoredTag();
         });
+    }
+
+    /**
+     * Determine whether the Telescope database tables have been created.
+     */
+    protected function telescopeMigrationsRan(): bool
+    {
+        try {
+            return Schema::hasTable('telescope_entries');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
