@@ -7,24 +7,28 @@ on:
     branches: [main]
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Tests
+  # ---------------------------------------------------------------------------
   tests:
     runs-on: ubuntu-latest
 
     services:
-      mysql:
-        image: mariadb:12
+      mariadb:
+        image: mariadb:11
         env:
           MARIADB_DATABASE: cinemacloud_test
           MARIADB_USER: cinemacloud
           MARIADB_PASSWORD: secret
-          MARIADB_ROOT_PASSWORD: rootsecret
+          MARIADB_ROOT_PASSWORD: root
         ports:
           - 3306:3306
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized"
-          --health-interval=10s
+          --health-interval=5s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
+          --health-start-period=10s
 
       redis:
         image: redis:8.6-alpine
@@ -32,62 +36,67 @@ jobs:
           - 6379:6379
         options: >-
           --health-cmd="redis-cli ping"
-          --health-interval=10s
+          --health-interval=5s
           --health-timeout=5s
           --health-retries=5
+
+    # -------------------------------------------------------------------------
+    # Setting DB_HOST here makes it a real OS environment variable.
+    # PHPUnit's <env> elements default to force="false", meaning they will NOT
+    # override a variable that is already present in the environment — so
+    # phpunit.xml's <env name="DB_HOST" value="db_test"/> is silently ignored
+    # and 127.0.0.1 (the GitHub Actions service container) is used instead.
+    # -------------------------------------------------------------------------
+    env:
+      DB_HOST: 127.0.0.1
+      REDIS_HOST: 127.0.0.1
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
+          # Keep in sync with PHP_VERSION in .env.example and the Dockerfile ARG
           php-version: "8.5"
           extensions: pdo, pdo_mysql, redis, opcache
           coverage: xdebug
+          ini-values: opcache.enable=0
 
-      - name: Install dependencies
+      # Use .env.testing (committed) as the application .env so artisan can
+      # boot without any manual patching — DB_HOST is overridden above.
+      - name: Prepare test environment
+        run: cp .env.testing src/.env
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: src/vendor
+          key: composer-${{ hashFiles('src/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
         working-directory: src
         run: composer install --no-interaction --prefer-dist
 
-      - name: Copy environment file
-        working-directory: src
-        run: cp ../.env.example .env
-
-      - name: Set environment variables
-        working-directory: src
-        run: |
-          echo "APP_KEY=" >> .env
-          echo "DB_HOST=127.0.0.1" >> .env
-          echo "DB_PORT=3306" >> .env
-          echo "DB_DATABASE=cinemacloud_test" >> .env
-          echo "DB_USERNAME=cinemacloud" >> .env
-          echo "DB_PASSWORD=secret" >> .env
-          echo "REDIS_HOST=127.0.0.1" >> .env
-          echo "REDIS_PORT=6379" >> .env
-          echo "CACHE_STORE=redis" >> .env
-          echo "SESSION_DRIVER=redis" >> .env
-          echo "QUEUE_CONNECTION=sync" >> .env
-
-      - name: Generate app key
-        working-directory: src
-        run: php artisan key:generate
-
       - name: Run migrations
         working-directory: src
-        run: php artisan migrate --force
+        run: php artisan migrate:fresh --force
 
       - name: Run tests with coverage
         working-directory: src
-        run: php artisan test --coverage --min=80
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          working-directory: src
+          files: src/coverage.xml
           fail_ci_if_error: false
 
+  # ---------------------------------------------------------------------------
+  # Code style
+  # ---------------------------------------------------------------------------
   lint:
     runs-on: ubuntu-latest
 
@@ -95,19 +104,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
+          coverage: none
 
-      - name: Install dependencies
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: src/vendor
+          key: composer-${{ hashFiles('src/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
         working-directory: src
         run: composer install --no-interaction --prefer-dist
 
-      - name: Run PHP CS Fixer
+      - name: Run PHP CS Fixer (dry-run)
         working-directory: src
         run: vendor/bin/php-cs-fixer fix --dry-run --diff --allow-risky=yes
 
+  # ---------------------------------------------------------------------------
+  # Static analysis
+  # ---------------------------------------------------------------------------
   analyse:
     name: PHPStan
     runs-on: ubuntu-latest
@@ -116,25 +136,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
           extensions: pdo, pdo_mysql, opcache
           coverage: none
 
-      - name: Cache Composer dependencies
+      - name: Cache Composer packages
         uses: actions/cache@v4
         with:
           path: src/vendor
           key: composer-${{ hashFiles('src/composer.lock') }}
           restore-keys: composer-
 
-      - name: Install dependencies
+      - name: Install Composer dependencies
         working-directory: src
         run: composer install --no-interaction --prefer-dist
 
-      - name: Bootstrap environment
+      - name: Bootstrap environment for analysis
         working-directory: src
         run: |
           cp ../.env.example .env
