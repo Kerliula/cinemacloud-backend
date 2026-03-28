@@ -46,8 +46,6 @@ services:
   db:
     image: mariadb:${MARIADB_VERSION:-12}
     restart: unless-stopped
-    ports:
-      - "${DB_PORT:-3306}:3306"
     environment:
       MARIADB_DATABASE: ${DB_DATABASE}
       MARIADB_USER: ${DB_USERNAME}
