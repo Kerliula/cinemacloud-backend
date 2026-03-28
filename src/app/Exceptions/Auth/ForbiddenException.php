@@ -13,4 +13,3 @@ final class ForbiddenException extends AuthException
         throw new self(__('auth.forbidden'), Response::HTTP_FORBIDDEN);
     }
 }
-
