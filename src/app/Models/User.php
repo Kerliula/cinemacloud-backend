@@ -40,13 +40,9 @@ class User extends Authenticatable implements JWTSubject
 
     public function isAdmin(): bool
     {
-        if ($this->relationLoaded('admin')) {
-            return $this->admin !== null;
-        }
+        $this->loadMissing('admin');
 
-        return (bool)once(
-            fn () => $this->admin()->exists(),
-        );
+        return $this->admin !== null;
     }
 
     public function admin(): HasOne
