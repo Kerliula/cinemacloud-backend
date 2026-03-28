@@ -1,5 +1,6 @@
 COMPOSE_DEV = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
+COMPOSE_TEST = docker compose -p cinemacloud-test -f docker-compose.yml -f docker-compose.test.yml
 COMPOSE = $(COMPOSE_DEV)
 
 init:
@@ -70,10 +71,20 @@ baseline:
 	$(COMPOSE) exec app vendor/bin/phpstan analyse --generate-baseline --memory-limit=512M
 
 test:
-	$(COMPOSE) exec -e XDEBUG_MODE=off app vendor/bin/phpunit
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"php artisan migrate:fresh --force && vendor/bin/phpunit"
 
 test-coverage:
-	$(COMPOSE) exec -e XDEBUG_MODE=coverage app vendor/bin/phpunit --coverage-html coverage
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=coverage app sh -c \
+		"php artisan migrate:fresh --force && vendor/bin/phpunit --coverage-html coverage"
+
+test-filter:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"php artisan migrate:fresh --force && vendor/bin/phpunit --filter=$(filter)"
+
+test-suite:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"php artisan migrate:fresh --force && vendor/bin/phpunit --testsuite=$(suite)"
 
 ide-helper:
 	$(COMPOSE) exec -u root app sh -c " \

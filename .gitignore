@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.testing
 
 # Laravel
 src/_ide_helper.php

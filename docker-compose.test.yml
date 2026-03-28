@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      target: base
+    volumes:
+      - ./src:/var/www/html
+      - ./.env.testing:/var/www/html/.env
+    depends_on:
+      db_test:
+        condition: service_healthy
+    environment:
+      APP_ENV: testing
+      XDEBUG_MODE: "off"
+
+  db_test:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: cinemacloud_test
+      MARIADB_USER: cinemacloud
+      MARIADB_PASSWORD: secret
+      MARIADB_ROOT_PASSWORD: root
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - app-network
+
