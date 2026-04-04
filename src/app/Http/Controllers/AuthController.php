@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\DTOs\Auth\{LoginDTO, RegisterDTO, TokenDTO};
+use App\Exceptions\Auth\AuthException;
 use App\Http\Requests\Auth\{LoginRequest, RegisterRequest};
 use App\Http\Resource\UserResource;
 use App\Models\User;
-use App\Services\AuthService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @tags Auth
  */
-final readonly class AuthController
+final class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService)
-    {
-    }
-
+    private const string KEY_TOKEN = 'token';
     /**
      * Register a new user.
      *
@@ -27,73 +26,77 @@ final readonly class AuthController
      *
      * @unauthenticated
      */
-    public function register(RegisterRequest $request): UserResource
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $credentials = RegisterDTO::fromRequest($request);
-        $authResult = $this->authService->register($credentials);
+        try {
+            $token = Auth::login(
+                User::create($request->validated()),
+            );
+        } catch (JWTException) {
+            throw new AuthException(
+                __('auth.token.failed_to_generate'),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            );
+        }
 
-        return $this->buildAuthenticatedResponse(
-            user: $authResult->user,
-            token: $authResult->token,
-        );
+        return $this->created([self::KEY_TOKEN => $token]);
     }
-
     /**
      * Log in a user.
      *
-     * Authenticates a user with email and password and returns a JWT access token.
+     * Authenticates the user and returns a JWT access token.
      *
      * @unauthenticated
      */
-    public function login(LoginRequest $request): UserResource
+    public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = LoginDTO::fromRequest($request);
-        $authResult = $this->authService->login($credentials);
+        $token = Auth::attempt($request->credentials());
 
-        return $this->buildAuthenticatedResponse(
-            user: $authResult->user,
-            token: $authResult->token,
-        );
+        if (! $token) {
+            return $this->unauthorized(__('auth.invalid_credentials'));
+        }
+
+        return $this->ok([self::KEY_TOKEN => $token]);
     }
-
     /**
-     * Log out the current user.
+     * Get the authenticated user's information.
      *
-     * Invalidates the current JWT token.
-     */
-    public function logout(): Response
-    {
-        $this->authService->logout();
-
-        return response()->noContent();
-    }
-
-    /**
-     * Get the authenticated user.
+     * Returns the details of the currently authenticated user.
      *
-     * Returns the profile of the currently authenticated user.
+     * @authenticated
      */
     public function me(): UserResource
     {
-        return new UserResource(
-            $this->authService->me(),
-        );
+        return UserResource::make(auth()->user());
     }
-
     /**
-     * Refresh the JWT token.
+     * Refresh the JWT access token.
      *
-     * Returns a new JWT access token, invalidating the previous one.
+     * Generates a new JWT access token for the authenticated user.
+     *
+     * @authenticated
      */
-    public function refresh(): Response
+    public function refresh(): JsonResponse
     {
-        return response()->json(
-            $this->authService->refresh()->toArray(),
-        );
-    }
+        try {
+            $token = Auth::refresh();
+        } catch (JWTException) {
+            throw new AuthException(__('auth.token.failed_to_refresh'));
+        }
 
-    private function buildAuthenticatedResponse(User $user, TokenDTO $token): UserResource
+        return $this->ok([self::KEY_TOKEN => $token]);
+    }
+    /**
+     * Log out a user.
+     *
+     * Invalidates the user's JWT access token.
+     *
+     * @authenticated
+     */
+    public function logout(): Response
     {
-        return new UserResource($user)->additional(['token' => $token->toArray()]);
+        Auth::logout();
+
+        return $this->noContent();
     }
 }

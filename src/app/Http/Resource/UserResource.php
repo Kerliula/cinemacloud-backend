@@ -8,26 +8,19 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin User
+ */
 final class UserResource extends JsonResource
 {
     public static $wrap = 'user';
 
-    public function __construct(
-        User $user,
-    ) {
-        parent::__construct($user);
-    }
-
     public function toArray(Request $request): array
     {
-        /** @var User $user */
-        $user = $this->resource;
-
         return [
-            'uuid' => $user->uuid,
-            'username' => $user->username,
-            'email' => $user->email,
-            'created_at' => $user->created_at,
+            'uuid' => $this->resource->uuid,
+            'username' => $this->resource->username,
+            'email' => $this->resource->email,
         ];
     }
 }

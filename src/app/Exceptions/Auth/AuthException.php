@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace App\Exceptions\Auth;
 
-use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
-abstract class AuthException extends RuntimeException
+final class AuthException extends HttpException
 {
-    public function __construct(string $message, protected readonly int $statusCode)
+    public function __construct(string $message, int $statusCode = Response::HTTP_UNAUTHORIZED)
     {
-        parent::__construct($message);
-    }
-
-    public function getStatusCode(): int
-    {
-        return $this->statusCode;
+        parent::__construct($statusCode, $message);
     }
 }

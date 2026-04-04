@@ -9,7 +9,6 @@ Route::prefix('auth')
     ->name('auth.')
     ->controller(AuthController::class)
     ->group(function (): void {
-
         Route::middleware('throttle.auth')->group(function (): void {
             Route::post('login', 'login')->name('login');
             Route::post('register', 'register')->name('register');
