@@ -29,7 +29,7 @@ final class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         try {
-            $token = Auth::login(
+            $token = auth()->login(
                 User::create($request->validated()),
             );
         } catch (JWTException) {
@@ -50,7 +50,7 @@ final class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $token = Auth::attempt($request->credentials());
+        $token = auth()->attempt($request->credentials());
 
         if (! $token) {
             return $this->unauthorized(__('auth.invalid_credentials'));
@@ -79,7 +79,7 @@ final class AuthController extends Controller
     public function refresh(): JsonResponse
     {
         try {
-            $token = Auth::refresh();
+            $token = auth()->refresh();
         } catch (JWTException) {
             throw new AuthException(__('auth.token.failed_to_refresh'));
         }
@@ -95,7 +95,7 @@ final class AuthController extends Controller
      */
     public function logout(): Response
     {
-        Auth::logout();
+        auth()->logout();
 
         return $this->noContent();
     }
