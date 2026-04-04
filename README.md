@@ -107,15 +107,15 @@ Base URL: **`http://localhost:8080/api`**
 
 ### Auth — `/api/auth`
 
-| Method | Endpoint             | Auth required | Description                                              |
-|--------|----------------------|:-------------:|----------------------------------------------------------|
-| `POST` | `/auth/register`     | ✗             | Create a new user account; returns user + JWT token      |
-| `POST` | `/auth/login`        | ✗             | Authenticate with email & password; returns user + JWT   |
-| `POST` | `/auth/refresh`      | ✗             | Exchange a valid JWT for a new one (rate-limited)        |
-| `POST` | `/auth/logout`       | ✔ Bearer JWT  | Invalidate the current JWT token                         |
-| `GET`  | `/auth/me`           | ✔ Bearer JWT  | Return the authenticated user's profile                  |
+> Routes marked with ✗ are rate-limited (`throttle.auth`). Protected routes require `Authorization: Bearer <jwt>`.
 
-> All routes under `/auth/register`, `/auth/login`, and `/auth/refresh` are protected by the `throttle.auth` rate-limit middleware.
+| Method | Endpoint         | Auth | Request body                                                                 | Response                              |
+|--------|------------------|:----:|------------------------------------------------------------------------------|---------------------------------------|
+| `POST` | `/auth/register` | ✗    | `username` (string, unique, max 255), `email` (email, unique), `password` (min 8) | `201` `{ "token": "..." }`       |
+| `POST` | `/auth/login`    | ✗    | `email` (email), `password` (string)                                         | `200` `{ "token": "..." }`            |
+| `POST` | `/auth/refresh`  | ✗    | —                                                                            | `200` `{ "token": "..." }`            |
+| `POST` | `/auth/logout`   | ✔    | —                                                                            | `204 No Content`                      |
+| `GET`  | `/auth/me`       | ✔    | —                                                                            | `200` `{ "user": { "uuid", "username", "email" } }` |
 
 ## Tech Stack
 
