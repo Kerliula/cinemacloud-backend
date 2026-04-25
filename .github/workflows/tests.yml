@@ -56,7 +56,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           # Keep in sync with PHP_VERSION in .env.example and the Dockerfile ARG
           php-version: "8.5"
@@ -89,7 +89,7 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4
         with:
           files: src/coverage.xml
           fail_ci_if_error: false
@@ -105,7 +105,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: "8.5"
           coverage: none
@@ -137,7 +137,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: "8.5"
           extensions: pdo, pdo_mysql, opcache
