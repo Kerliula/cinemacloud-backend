@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MovieController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -19,4 +20,12 @@ Route::prefix('auth')
             Route::post('logout', 'logout')->name('logout');
             Route::get('me', 'me')->name('me');
         });
+    });
+
+Route::prefix('movies')
+    ->name('movies.')
+    ->controller(MovieController::class)
+    ->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::get('{uuid}', 'show')->name('show');
     });
