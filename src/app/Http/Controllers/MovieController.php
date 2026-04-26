@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Movie\MovieIndexRequest;
+use App\DTOs\Movie\MovieCatalogDTO;
+use App\Actions\Movie\GetMovieCatalogAction;
+use App\Http\Requests\Movie\MovieCatalogRequest;
 use App\Http\Resources\Movie\MovieCatalogCollection;
-use App\Models\Movie;
 
 final class MovieController extends Controller
 {
-    public function index(MovieIndexRequest $request): MovieCatalogCollection
+    public function index(MovieCatalogRequest $request, GetMovieCatalogAction $action): MovieCatalogCollection
     {
-        $movies = Movie::query()
-            ->search($request->search())
-            ->orderBy($request->sortBy(), $request->sortDirection())
-            ->paginate($request->perPage());
+        $dto = MovieCatalogDTO::fromRequest($request);
 
-        return MovieCatalogCollection::make($movies);
+        return MovieCatalogCollection::make($action->execute($dto));
     }
 }

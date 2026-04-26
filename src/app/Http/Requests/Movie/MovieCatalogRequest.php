@@ -6,7 +6,7 @@ namespace App\Http\Requests\Movie;
 
 use App\Http\Requests\ApiRequest;
 
-final class MovieIndexRequest extends ApiRequest
+final class MovieCatalogRequest extends ApiRequest
 {
     public const string FIELD_PER_PAGE = 'per_page';
     public const string FIELD_SORT_BY = 'sort_by';
