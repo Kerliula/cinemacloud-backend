@@ -4,19 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\Movie\MovieIndexRequest;
-use App\Http\Resources\Movie\MovieCatalogCollection;
+use App\Actions\Movie\ListMoviesAction;
+use App\DTOs\Movie\ListMoviesDTO;
+use App\Http\Requests\Movie\ListMoviesRequest;
+use App\Http\Resources\Movie\MovieCollection;
+use App\Http\Resources\Movie\MovieResource;
 use App\Models\Movie;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Illuminate\Http\JsonResponse;
 
 final class MovieController extends Controller
 {
-    public function index(MovieIndexRequest $request): MovieCatalogCollection
+    #[Endpoint(title: 'List movies catalog')]
+    public function index(ListMoviesRequest $request, ListMoviesAction $action): MovieCollection
     {
-        $movies = Movie::query()
-            ->search($request->search())
-            ->orderBy($request->sortBy(), $request->sortDirection())
-            ->paginate($request->perPage());
+        $dto = ListMoviesDTO::fromRequest($request);
 
-        return MovieCatalogCollection::make($movies);
+        return $action->execute($dto);
+    }
+
+    #[Endpoint(title: 'Show movie details')]
+    public function show(Movie $movie): MovieResource
+    {
+        $movie->load('embedUrls', 'trailerUrls', 'genres');
+
+        return MovieResource::make($movie);
+    }
+
+    #[Endpoint(title: 'Delete a movie')]
+    public function destroy(Movie $movie): JsonResponse
+    {
+        $movie->delete();
+
+        return $this->noContent();
     }
 }

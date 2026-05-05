@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,18 +14,12 @@ final class User extends Authenticatable implements JWTSubject
 {
     use HasFactory;
     use Notifiable;
-    use HasUuids;
 
     protected $fillable = [
         'username',
         'email',
         'password',
     ];
-
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
-    }
 
     public function getJWTIdentifier(): mixed
     {

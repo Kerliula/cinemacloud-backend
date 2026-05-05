@@ -2,9 +2,12 @@ services:
   app:
     build:
       target: base
+      args:
+        INSTALL_XDEBUG: "true"
     volumes:
       - ./src:/var/www/html
       - ./.env.testing:/var/www/html/.env
+      - ./docker/app/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
     depends_on:
       db_test:
         condition: service_healthy

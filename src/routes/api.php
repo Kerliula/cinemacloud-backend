@@ -27,5 +27,11 @@ Route::prefix('movies')
     ->controller(MovieController::class)
     ->group(function (): void {
         Route::get('/', 'index')->name('index');
-        Route::get('{uuid}', 'show')->name('show');
+        Route::get('{movie}', 'show')->name('show');
+
+        Route::middleware('auth:api')->group(function (): void {
+            Route::middleware('require.admin')->group(function (): void {
+                Route::delete('{movie}', 'destroy')->name('destroy');
+            });
+        });
     });

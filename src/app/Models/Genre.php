@@ -4,43 +4,38 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Sluggable\HasSlug;
+use Spatie\Sluggable\SlugOptions;
 
 final class Genre extends Model
 {
-    use HasUuids;
     use HasFactory;
+    use HasSlug;
 
     protected $fillable = [
         'name',
         'slug',
     ];
 
-    public function uniqueIds(): array
+    public function getRouteKeyName(): string
     {
-        return ['uuid'];
+        return 'slug';
     }
 
-    public function movies()
+    public function movies(): BelongsToMany
     {
         return $this->belongsToMany(Movie::class);
     }
 
-    protected function casts(): array
+    public function getSlugOptions(): SlugOptions
     {
-        return [
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-        ];
-    }
-
-    protected static function booted(): void
-    {
-        static::creating(function (Genre $genre): void {
-            $genre->slug ??= Str::slug($genre->name);
-        });
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug')
+            ->slugsShouldBeNoLongerThan(255)
+            ->doNotGenerateSlugsOnUpdate();
     }
 }

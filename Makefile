@@ -31,6 +31,9 @@ down-v:
 build:
 	$(COMPOSE) build
 
+build-test:
+	$(COMPOSE_TEST) build --no-cache app
+
 restart:
 	$(COMPOSE) restart
 
@@ -42,6 +45,12 @@ logs:
 
 migrate:
 	$(COMPOSE) exec app php artisan migrate --force
+
+seed:
+	$(COMPOSE) exec app php artisan db:seed --force
+
+fresh:
+	$(COMPOSE) exec app php artisan migrate:fresh --force
 
 migrate-fresh:
 	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
@@ -72,19 +81,19 @@ baseline:
 
 test:
 	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"php artisan migrate:fresh --force && vendor/bin/phpunit"
+		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit"
 
 test-coverage:
 	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=coverage app sh -c \
-		"php artisan migrate:fresh --force && vendor/bin/phpunit --coverage-html coverage"
+		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --coverage-html coverage"
 
 test-filter:
 	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"php artisan migrate:fresh --force && vendor/bin/phpunit --filter=$(filter)"
+		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --filter=$(filter)"
 
 test-suite:
 	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"php artisan migrate:fresh --force && vendor/bin/phpunit --testsuite=$(suite)"
+		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --testsuite=$(suite)"
 
 ide-helper:
 	$(COMPOSE) exec -u root app sh -c " \

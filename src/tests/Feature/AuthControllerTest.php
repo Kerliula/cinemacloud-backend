@@ -214,7 +214,7 @@ final class AuthControllerTest extends TestCase
         $this->withToken($this->jwtFor($user))
             ->getJson(self::ME_URI)
             ->assertCreated()
-            ->assertJsonStructure(['user' => ['uuid', 'username', 'email']]);
+            ->assertJsonStructure(['user' => ['username', 'email']]);
     }
     public function test_me_returns_the_authenticated_users_data(): void
     {
@@ -224,7 +224,6 @@ final class AuthControllerTest extends TestCase
             ->assertCreated()
             ->assertJson([
                 'user' => [
-                    'uuid'     => $user->uuid,
                     'username' => $user->username,
                     'email'    => $user->email,
                 ],
