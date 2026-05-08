@@ -1,0 +1,41 @@
+[mysqld]
+
+# Engine
+default-storage-engine = InnoDB
+skip-external-locking
+
+# Durability (disabled for speed on tmpfs)
+skip-log-bin
+innodb_flush_log_at_trx_commit = 0
+innodb_flush_method = O_DIRECT_NO_FSYNC
+innodb_doublewrite = 0
+innodb_file_per_table = 1
+
+# Memory
+innodb_buffer_pool_size = 256M
+innodb_log_buffer_size = 16M
+innodb_log_file_size = 48M
+
+# I/O (tell InnoDB the storage is fast)
+innodb_io_capacity = 10000
+innodb_io_capacity_max = 20000
+innodb_flush_neighbors = 0
+
+# Connections & parallel tests
+max_connections = 200
+thread_cache_size = 100
+innodb_autoinc_lock_mode = 2
+innodb_lock_wait_timeout = 50
+max_allowed_packet = 32M
+
+# Timeouts
+net_read_timeout = 30
+net_write_timeout = 30
+
+# Charset
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+# Query cache (disabled)
+query_cache_type = 0
+query_cache_size = 0

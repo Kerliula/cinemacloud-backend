@@ -1,3 +1,4 @@
+
 services:
   app:
     build:
@@ -14,22 +15,31 @@ services:
     environment:
       APP_ENV: testing
       XDEBUG_MODE: "off"
-
-  db_test:
-    image: mariadb:11
-    environment:
-      MARIADB_DATABASE: cinemacloud_test
-      MARIADB_USER: cinemacloud
-      MARIADB_PASSWORD: secret
-      MARIADB_ROOT_PASSWORD: root
-    tmpfs:
-      - /var/lib/mysql
-    healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
+      DB_HOST: db_test
+      DB_PORT: 3306
     networks:
       - app-network
 
+  db_test:
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    tmpfs:
+      - /var/lib/mysql:rw,noatime,size=512M
+    volumes:
+      - ./docker/mysql/test.cnf:/etc/mysql/conf.d/test.cnf:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s         # more breathing room
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

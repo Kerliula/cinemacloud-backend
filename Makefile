@@ -1,25 +1,37 @@
-COMPOSE_DEV = docker compose -f docker-compose.yml -f docker-compose.dev.yml
+COMPOSE_DEV  = docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
-COMPOSE_TEST = docker compose -p cinemacloud-test -f docker-compose.yml -f docker-compose.test.yml
-COMPOSE = $(COMPOSE_DEV)
+COMPOSE_TEST = docker compose -p cinemacloud-test --env-file .env.testing -f docker-compose.yml -f docker-compose.test.yml
+COMPOSE      = $(COMPOSE_DEV)
+
+.PHONY: init up down down-v build build-test restart ps logs \
+	migrate seed fresh migrate-fresh artisan tinker bash db \
+	lint fix analyse baseline test test-init test-coverage \
+	test-filter test-suite test-parallel test-shell \
+	ide-helper telescope-clear
+
+# =============================================================================
+# Dev
+# =============================================================================
 
 init:
-	cp -n .env.example .env
+	rm -f .env src/.env
+	cp .env.example .env
 	cp .env src/.env
 	$(COMPOSE) down -v --rmi all --remove-orphans
 	$(COMPOSE) build --no-cache --pull
 	$(COMPOSE) up -d
 	rm -rf src/vendor
-	$(COMPOSE) exec -u www-data app composer install
+	$(COMPOSE) exec -u root app chown -R www-data:www-data /var/www/html
+	$(COMPOSE) exec -u www-data app composer clear-cache
+	$(COMPOSE) exec -u www-data app composer install --no-interaction
 	$(COMPOSE) exec -u www-data app sh -c " \
 		php artisan migrate:fresh --seed --force && \
 		php artisan key:generate && \
 		php artisan jwt:secret --force && \
 		php artisan storage:link --force"
-	cp src/.env .env
-	$(COMPOSE) exec -u root app chown -R www-data:www-data /var/www/html
+
 up:
-	cp .env src/.env
+	@[ -f src/.env ] || cp .env src/.env
 	$(COMPOSE) up -d
 
 down:
@@ -31,9 +43,6 @@ down-v:
 build:
 	$(COMPOSE) build
 
-build-test:
-	$(COMPOSE_TEST) build --no-cache app
-
 restart:
 	$(COMPOSE) restart
 
@@ -42,6 +51,10 @@ ps:
 
 logs:
 	$(COMPOSE) logs -f
+
+# =============================================================================
+# Database
+# =============================================================================
 
 migrate:
 	$(COMPOSE) exec app php artisan migrate --force
@@ -55,6 +68,10 @@ fresh:
 migrate-fresh:
 	$(COMPOSE) exec app php artisan migrate:fresh --seed --force
 
+# =============================================================================
+# Artisan helpers
+# =============================================================================
+
 artisan:
 	$(COMPOSE) exec app php artisan $(cmd)
 
@@ -66,6 +83,10 @@ bash:
 
 db:
 	$(COMPOSE) exec db mariadb -u $${DB_USERNAME:-cinemacloud} -p$${DB_PASSWORD:-secret} $${DB_DATABASE:-cinemacloud}
+
+# =============================================================================
+# Code quality
+# =============================================================================
 
 lint:
 	$(COMPOSE) exec app vendor/bin/php-cs-fixer fix --dry-run --diff
@@ -79,28 +100,50 @@ analyse:
 baseline:
 	$(COMPOSE) exec app vendor/bin/phpstan analyse --generate-baseline --memory-limit=512M
 
-test:
-	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit"
-
-test-coverage:
-	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=coverage app sh -c \
-		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --coverage-html coverage"
-
-test-filter:
-	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --filter=$(filter)"
-
-test-suite:
-	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
-		"composer install --no-interaction && php artisan migrate:fresh --force && vendor/bin/phpunit --testsuite=$(suite)"
-
 ide-helper:
 	$(COMPOSE) exec -u root app sh -c " \
 		php artisan ide-helper:generate && \
 		php artisan ide-helper:models --nowrite && \
 		php artisan ide-helper:meta && \
 		chown -R www-data:www-data /var/www/html"
+
+# =============================================================================
+# Tests
+# =============================================================================
+
+test-init: build-test
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"composer install --no-interaction && php artisan migrate:fresh --force"
+
+test:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"vendor/bin/phpunit"
+
+test-parallel:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"php artisan test --parallel"
+
+test-coverage:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=coverage app sh -c \
+		"vendor/bin/phpunit --coverage-html coverage"
+
+test-filter:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"vendor/bin/phpunit --filter=$(filter)"
+
+test-suite:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh -c \
+		"vendor/bin/phpunit --testsuite=$(suite)"
+
+test-shell:
+	$(COMPOSE_TEST) run --rm -e XDEBUG_MODE=off app sh
+
+build-test:
+	$(COMPOSE_TEST) build --no-cache app
+
+# =============================================================================
+# Misc
+# =============================================================================
 
 telescope-clear:
 	$(COMPOSE) exec app php artisan telescope:clear
