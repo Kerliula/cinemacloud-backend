@@ -16,8 +16,6 @@ final class DatabaseSeeder extends Seeder
         $this->call([
             GenreSeeder::class,
             MovieSeeder::class,
-            MovieEmbedUrlSeeder::class,
-            MovieTrailerUrlSeeder::class,
         ]);
     }
 }
