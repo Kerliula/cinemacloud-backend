@@ -9,6 +9,7 @@ use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
@@ -19,6 +20,11 @@ final class MovieControllerTest extends TestCase
     private const string MOVIES_URI = '/api/movies';
     private const string MOVIE_SHOW_URI = '/api/movies/{slug}';
     private const string MOVIE_DESTROY_URI = '/api/movies/{slug}';
+
+    public static function setUpBeforeClass(): void
+    {
+        RefreshDatabaseState::$migrated = false;
+    }
 
     // ─────────────────────────────────────────────────────────────────
     // GET /api/movies - List Movies
@@ -469,7 +475,7 @@ final class MovieControllerTest extends TestCase
 
         $response = $this->getJson(self::MOVIES_URI)->json('movies');
 
-        $activeIds = array_map(fn($movie) => $movie['id'], $response);
+        $activeIds = array_map(fn ($movie) => $movie['id'], $response);
 
         $this->assertContains($activeMovie->id, $activeIds);
         $this->assertNotContains($deletedMovie->id, $activeIds);
@@ -486,4 +492,3 @@ final class MovieControllerTest extends TestCase
         return Admin::factory()->forUser($user)->create();
     }
 }
-

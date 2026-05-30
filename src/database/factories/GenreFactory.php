@@ -12,9 +12,12 @@ use Illuminate\Support\Str;
  */
 final class GenreFactory extends Factory
 {
+    protected static ?int $genreCounter = 0;
+
     public function definition(): array
     {
-        $name = fake()->unique()->word();
+        self::$genreCounter++;
+        $name = fake()->word() . ' ' . fake()->word() . ' ' . self::$genreCounter;
 
         return [
             'name' => ucfirst($name),

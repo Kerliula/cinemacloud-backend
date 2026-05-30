@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Movie;
-use App\Models\MovieEmbedUrl;
-use App\Models\MovieTrailerUrl;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,18 +25,5 @@ final class MovieFactory extends Factory
             'release_year' => fake()->year(),
             'thumbnail_url' => fake()->imageUrl(640, 360, 'movies'),
         ];
-    }
-
-    public function configure(): self
-    {
-        return $this->afterCreating(function (Movie $movie): void {
-            MovieEmbedUrl::factory(random_int(1, 2))
-                ->forMovie($movie)
-                ->create();
-
-            MovieTrailerUrl::factory(random_int(1, 2))
-                ->forMovie($movie)
-                ->create();
-        });
     }
 }

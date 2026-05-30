@@ -31,6 +31,7 @@ services:
       - /var/lib/mysql:rw,noatime,size=512M
     volumes:
       - ./docker/mysql/test.cnf:/etc/mysql/conf.d/test.cnf:ro
+      - ./docker/mysql/init-test.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s

@@ -49,7 +49,7 @@ final class Movie extends Model
 
     public function scopeSearch(Builder $query, ?string $search): void
     {
-        $query->when($search, fn(Builder $q, string $value) => $q->where('title', 'like', '%' . $value . '%'));
+        $query->when($search, fn (Builder $q, string $value) => $q->where('title', 'like', '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%'));
     }
 
     public function getSlugOptions(): SlugOptions

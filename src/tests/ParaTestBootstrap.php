@@ -45,4 +45,3 @@ class ParaTestBootstrap
         // Database transactions will be rolled back automatically
     }
 }
-

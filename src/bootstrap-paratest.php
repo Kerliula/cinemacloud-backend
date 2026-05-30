@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * ParaTest Database Bootstrap
  *
@@ -24,4 +26,3 @@ if ($testToken) {
     // Each process gets a unique token
     putenv("PARATEST_PROCESS_TOKEN={$testToken}");
 }
-

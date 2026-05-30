@@ -28,14 +28,14 @@ final class MovieResource extends JsonResource
             'thumbnail_url' => $this->thumbnail_url,
             'release_year' => $this->release_year,
 
-            'genres' => $this->whenLoaded('genres', fn() => GenreCollection::make($this->genres)),
+            'genres' => $this->whenLoaded('genres', fn () => GenreCollection::make($this->genres)),
             'trailer_urls' => $this->whenLoaded(
                 'trailerUrls',
-                fn() => MovieTrailerUrlCollection::make($this->trailerUrls),
+                fn () => MovieTrailerUrlCollection::make($this->trailerUrls),
             ),
             'embed_urls' => $this->whenLoaded(
                 'embedUrls',
-                fn() => MovieEmbedUrlCollection::make($this->embedUrls),
+                fn () => MovieEmbedUrlCollection::make($this->embedUrls),
             ),
         ];
     }

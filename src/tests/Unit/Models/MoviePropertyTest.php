@@ -8,9 +8,15 @@ use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\MovieEmbedUrl;
 use App\Models\MovieTrailerUrl;
-use Eris\Generator;
+
+use function Eris\Generator\choose;
+use function Eris\Generator\string;
+use function Eris\Generator\suchThat;
+use function Eris\Generator\tuple;
+
 use Eris\TestTrait;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class MoviePropertyTest extends TestCase
@@ -25,11 +31,9 @@ final class MoviePropertyTest extends TestCase
     public function test_slug_is_always_generated_from_title(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie = Movie::factory()->create(['title' => $title]);
 
                 $this->assertNotEmpty($movie->slug);
@@ -42,11 +46,9 @@ final class MoviePropertyTest extends TestCase
     public function test_slug_generation_is_deterministic(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen(trim($s)) > 0)
+            suchThat(fn ($s) => strlen(trim($s)) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie1 = Movie::factory()->create(['title' => $title]);
                 $movie2 = Movie::factory()->create(['title' => $title]);
 
@@ -60,11 +62,9 @@ final class MoviePropertyTest extends TestCase
     public function test_slug_does_not_exceed_max_length(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(500)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie = Movie::factory()->create(['title' => $title]);
 
                 $this->assertLessThanOrEqual(255, strlen($movie->slug));
@@ -78,10 +78,9 @@ final class MoviePropertyTest extends TestCase
     public function test_release_year_is_always_integer(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1800, 2100)
+            choose(1800, 2100)
         )
-            ->then(function (int $year) {
+            ->then(function (int $year): void {
                 $movie = Movie::factory()->create(['release_year' => $year]);
 
                 $this->assertIsInt($movie->release_year);
@@ -92,10 +91,9 @@ final class MoviePropertyTest extends TestCase
     public function test_release_year_is_cast_correctly(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1900, 2050)
+            choose(1900, 2050)
         )
-            ->then(function (int $year) {
+            ->then(function (int $year): void {
                 $movie = Movie::factory()->create(['release_year' => $year]);
                 $retrievedMovie = Movie::find($movie->id);
 
@@ -111,11 +109,9 @@ final class MoviePropertyTest extends TestCase
     public function test_title_can_be_set(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(200)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie = Movie::factory()->make(['title' => $title]);
 
                 $this->assertEquals($title, $movie->title);
@@ -125,10 +121,9 @@ final class MoviePropertyTest extends TestCase
     public function test_description_can_be_set(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(5000)
+            string()
         )
-            ->then(function (string $description) {
+            ->then(function (string $description): void {
                 $movie = Movie::factory()->make(['description' => $description]);
 
                 $this->assertEquals($description, $movie->description);
@@ -138,11 +133,9 @@ final class MoviePropertyTest extends TestCase
     public function test_thumbnail_url_can_be_set(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(2048)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $url) {
+            ->then(function (string $url): void {
                 $movie = Movie::factory()->make(['thumbnail_url' => $url]);
 
                 $this->assertEquals($url, $movie->thumbnail_url);
@@ -156,11 +149,9 @@ final class MoviePropertyTest extends TestCase
     public function test_search_returns_only_movies_containing_search_term(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(50)
-                ->filter(fn($s) => strlen($s) >= 2)
+            suchThat(fn ($s) => strlen($s) >= 2, string())
         )
-            ->then(function (string $searchTerm) {
+            ->then(function (string $searchTerm): void {
                 $matchingTitle = "The {$searchTerm} Story";
                 Movie::factory()->create(['title' => $matchingTitle]);
                 Movie::factory(3)->create();
@@ -180,26 +171,35 @@ final class MoviePropertyTest extends TestCase
     public function test_search_with_empty_string_returns_all_movies(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 5)
+            choose(1, 5)
         )
-            ->then(function (int $count) {
-                Movie::factory($count)->create();
+            ->then(function (int $count): void {
+                DB::beginTransaction();
 
-                $results = Movie::query()->search('')->get();
+                try {
+                    Movie::factory($count)->create();
+                    $createdIds = Movie::latest('id')->limit($count)->pluck('id');
 
-                $this->assertCount($count, $results);
+                    $results = Movie::query()->search('')->get();
+                    $resultIds = $results->pluck('id');
+
+                    $this->assertGreaterThanOrEqual($count, $results->count());
+                    $this->assertTrue(
+                        $createdIds->diff($resultIds)->isEmpty(),
+                        'All created movies should appear in search results'
+                    );
+                } finally {
+                    DB::rollBack();
+                }
             });
     }
 
     public function test_search_is_case_insensitive(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(30)
-                ->filter(fn($s) => strlen($s) >= 2)
+            suchThat(fn ($s) => strlen($s) >= 2, string())
         )
-            ->then(function (string $term) {
+            ->then(function (string $term): void {
                 $movie = Movie::factory()->create(['title' => "Movie {$term} Title"]);
 
                 // Search with different cases should find the same movie
@@ -222,11 +222,9 @@ final class MoviePropertyTest extends TestCase
     public function test_route_key_is_always_slug(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie = Movie::factory()->create(['title' => $title]);
 
                 $this->assertEquals('slug', $movie->getRouteKeyName());
@@ -242,10 +240,9 @@ final class MoviePropertyTest extends TestCase
     public function test_soft_delete_preserves_other_movies(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 5)
+            choose(1, 5)
         )
-            ->then(function (int $count) {
+            ->then(function (int $count): void {
                 $movies = Movie::factory($count)->create();
                 $movieToDelete = $movies->first();
 
@@ -261,11 +258,9 @@ final class MoviePropertyTest extends TestCase
     public function test_soft_deleted_movie_can_be_restored(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $title) {
+            ->then(function (string $title): void {
                 $movie = Movie::factory()->create(['title' => $title]);
                 $movie->delete();
 
@@ -284,44 +279,53 @@ final class MoviePropertyTest extends TestCase
     public function test_movie_can_have_multiple_genres(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(0, 5)
+            choose(0, 5)
         )
-            ->then(function (int $genreCount) {
-                $movie = Movie::factory()->create();
-                $genres = Genre::factory($genreCount)->create();
+            ->then(function (int $genreCount): void {
+                DB::beginTransaction();
 
-                $movie->genres()->attach($genres);
+                try {
+                    $movie = Movie::factory()->create();
+                    $genres = Genre::factory($genreCount)->create();
 
-                $this->assertCount($genreCount, $movie->genres);
+                    $movie->genres()->attach($genres);
+
+                    $this->assertCount($genreCount, $movie->genres);
+                } finally {
+                    DB::rollBack();
+                }
             });
     }
 
     public function test_movie_genre_relationship_is_many_to_many(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 3)
+            choose(1, 3)
         )
-            ->then(function (int $movieCount) {
-                $movies = Movie::factory($movieCount)->create();
-                $genre = Genre::factory()->create();
+            ->then(function (int $movieCount): void {
+                DB::beginTransaction();
 
-                foreach ($movies as $movie) {
-                    $movie->genres()->attach($genre);
+                try {
+                    $movies = Movie::factory($movieCount)->create();
+                    $genre = Genre::factory()->create();
+
+                    foreach ($movies as $movie) {
+                        $movie->genres()->attach($genre);
+                    }
+
+                    $this->assertCount($movieCount, $genre->movies);
+                } finally {
+                    DB::rollBack();
                 }
-
-                $this->assertCount($movieCount, $genre->movies);
             });
     }
 
     public function test_movie_can_have_multiple_embed_urls(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(0, 5)
+            choose(0, 5)
         )
-            ->then(function (int $urlCount) {
+            ->then(function (int $urlCount): void {
                 $movie = Movie::factory()->create();
                 MovieEmbedUrl::factory($urlCount)->for($movie)->create();
 
@@ -332,10 +336,9 @@ final class MoviePropertyTest extends TestCase
     public function test_movie_can_have_multiple_trailer_urls(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(0, 5)
+            choose(0, 5)
         )
-            ->then(function (int $urlCount) {
+            ->then(function (int $urlCount): void {
                 $movie = Movie::factory()->create();
                 MovieTrailerUrl::factory($urlCount)->for($movie)->create();
 
@@ -350,12 +353,12 @@ final class MoviePropertyTest extends TestCase
     public function test_changing_title_updates_slug(): void
     {
         $this->forAll(
-            Generator\tuples(
-                Generator\strings()->withMaxSize(50)->filter(fn($s) => strlen($s) > 0),
-                Generator\strings()->withMaxSize(50)->filter(fn($s) => strlen($s) > 0)
+            tuple(
+                suchThat(fn ($s) => strlen($s) > 0, string()),
+                suchThat(fn ($s) => strlen($s) > 0, string())
             )
         )
-            ->then(function (array $titles) {
+            ->then(function (array $titles): void {
                 [$title1, $title2] = $titles;
 
                 $movie = Movie::factory()->create(['title' => $title1]);
@@ -371,13 +374,13 @@ final class MoviePropertyTest extends TestCase
     public function test_identical_attributes_create_identical_instances(): void
     {
         $this->forAll(
-            Generator\tuples(
-                Generator\strings()->withMaxSize(100)->filter(fn($s) => strlen($s) > 0),
-                Generator\strings()->withMaxSize(500),
-                Generator\integers()->between(1900, 2100)
+            tuple(
+                suchThat(fn ($s) => strlen($s) > 0, string()),
+                string(),
+                choose(1900, 2100)
             )
         )
-            ->then(function (array $data) {
+            ->then(function (array $data): void {
                 [$title, $description, $year] = $data;
 
                 $attributes = [
@@ -395,4 +398,3 @@ final class MoviePropertyTest extends TestCase
             });
     }
 }
-

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tests\Paratest;
 
 use Illuminate\Support\Facades\Artisan;
+use Throwable;
 
 class DatabaseHook
 {
@@ -32,7 +33,7 @@ class DatabaseHook
             Artisan::call('migrate:status', [
                 '--quiet' => true,
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Database might already be initialized
         }
     }
@@ -77,4 +78,3 @@ class DatabaseHook
         return (bool) getenv('DB_ISOLATED_PER_PROCESS', false);
     }
 }
-

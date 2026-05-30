@@ -8,10 +8,16 @@ use App\Models\Admin;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
-use Eris\Generator;
+
+use function Eris\Generator\choose;
+use function Eris\Generator\string;
+use function Eris\Generator\suchThat;
+use function Eris\Generator\tuple;
+
 use Eris\TestTrait;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class MovieControllerPropertyTest extends TestCase
@@ -30,10 +36,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_pagination_respects_per_page_limits(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, config('api.pagination.max_per_page'))
+            choose(1, (int) config('api.pagination.max_per_page'))
         )
-            ->then(function (int $perPage) {
+            ->then(function (int $perPage): void {
                 Movie::factory(50)->create();
 
                 $response = $this->getJson(self::MOVIES_URI . '?per_page=' . $perPage)
@@ -47,10 +52,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_pages_correctly_with_various_page_numbers(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 3)
+            choose(1, 3)
         )
-            ->then(function (int $page) {
+            ->then(function (int $page): void {
                 Movie::factory(50)->create();
                 $perPage = config('api.pagination.default_per_page');
 
@@ -68,11 +72,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_search_returns_movies_containing_search_term(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(30)
-                ->filter(fn($s) => strlen($s) >= 2)
+            suchThat(fn ($s) => strlen($s) >= 2 && strlen($s) <= 100, string())
         )
-            ->then(function (string $searchTerm) {
+            ->then(function (string $searchTerm): void {
                 Movie::factory()->create(['title' => "The {$searchTerm} Movie"]);
                 Movie::factory(5)->create();
 
@@ -97,10 +99,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_sorts_by_title_in_ascending_order(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(3, 10)
+            choose(3, 10)
         )
-            ->then(function (int $count) {
+            ->then(function (int $count): void {
                 $movies = [];
                 for ($i = 0; $i < $count; $i++) {
                     $movies[] = chr(65 + $i); // Create titles: A, B, C, etc.
@@ -114,7 +115,7 @@ final class MovieControllerPropertyTest extends TestCase
                     ->assertOk();
 
                 $resultTitles = array_map(
-                    fn($movie) => $movie['title'],
+                    fn ($movie) => $movie['title'],
                     $response->json('movies')
                 );
 
@@ -129,10 +130,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_sorts_by_release_year_in_ascending_order(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 5)
+            choose(1, 5)
         )
-            ->then(function (int $count) {
+            ->then(function (int $count): void {
                 $years = [];
                 for ($i = 0; $i < $count; $i++) {
                     $years[] = 2000 + ($i * 5);
@@ -146,7 +146,7 @@ final class MovieControllerPropertyTest extends TestCase
                     ->assertOk();
 
                 $resultYears = array_map(
-                    fn($movie) => $movie['release_year'],
+                    fn ($movie) => $movie['release_year'],
                     $response->json('movies')
                 );
 
@@ -165,13 +165,13 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_show_always_returns_complete_movie_structure(): void
     {
         $this->forAll(
-            Generator\tuples(
-                Generator\strings()->withMaxSize(100)->filter(fn($s) => strlen($s) > 0),
-                Generator\strings()->withMaxSize(500),
-                Generator\integers()->between(1900, 2100)
+            tuple(
+                suchThat(fn ($s) => strlen($s) > 0, string()),
+                string(),
+                choose(1900, 2100)
             )
         )
-            ->then(function (array $data) {
+            ->then(function (array $data): void {
                 [$title, $description, $year] = $data;
 
                 $movie = Movie::factory()->create([
@@ -205,20 +205,25 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_show_genres_are_always_arrays(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(0, 5)
+            choose(0, 5)
         )
-            ->then(function (int $genreCount) {
-                $movie = Movie::factory()->create();
-                $genres = Genre::factory($genreCount)->create();
-                $movie->genres()->attach($genres);
+            ->then(function (int $genreCount): void {
+                DB::beginTransaction();
 
-                $response = $this->getJson(str_replace('{slug}', $movie->slug, self::MOVIE_SHOW_URI))
-                    ->assertOk();
+                try {
+                    $movie = Movie::factory()->create();
+                    $genres = Genre::factory($genreCount)->create();
+                    $movie->genres()->attach($genres);
 
-                $genresData = $response->json('movie.genres');
-                $this->assertIsArray($genresData);
-                $this->assertCount($genreCount, $genresData);
+                    $response = $this->getJson(str_replace('{slug}', $movie->slug, self::MOVIE_SHOW_URI))
+                        ->assertOk();
+
+                    $genresData = $response->json('movie.genres');
+                    $this->assertIsArray($genresData);
+                    $this->assertCount($genreCount, $genresData);
+                } finally {
+                    DB::rollBack();
+                }
             });
     }
 
@@ -229,11 +234,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_destroy_always_requires_authentication(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(50)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function (string $slug) {
+            ->then(function (string $slug): void {
                 $movie = Movie::factory()->create();
 
                 $response = $this->deleteJson(
@@ -248,11 +251,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_destroy_always_requires_admin_role(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(50)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function () {
+            ->then(function (): void {
                 $user = User::factory()->create();
                 $movie = Movie::factory()->create();
                 $token = Auth::login($user);
@@ -268,11 +269,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_destroy_by_admin_always_returns_204(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function () {
+            ->then(function (): void {
                 $admin = $this->createAdmin();
                 $movie = Movie::factory()->create();
                 $token = Auth::login($admin->user);
@@ -288,10 +287,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_destroy_actually_soft_deletes_movie(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 5)
+            choose(1, 5)
         )
-            ->then(function (int $count) {
+            ->then(function (int $count): void {
                 $admin = $this->createAdmin();
                 $movies = Movie::factory($count)->create();
                 $movieToDelete = $movies->first();
@@ -313,29 +311,34 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_never_returns_soft_deleted_movies(): void
     {
         $this->forAll(
-            Generator\integers()
-                ->between(1, 5)
+            choose(1, 5)
         )
-            ->then(function (int $activeCount) {
-                $deletedCount = $activeCount > 0 ? 1 : 0;
-                $activeMovies = Movie::factory($activeCount)->create();
-                $deletedMovies = Movie::factory($deletedCount)->create();
+            ->then(function (int $activeCount): void {
+                DB::beginTransaction();
 
-                foreach ($deletedMovies as $movie) {
-                    $movie->delete();
-                }
+                try {
+                    $deletedCount = $activeCount > 0 ? 1 : 0;
+                    $activeMovies = Movie::factory($activeCount)->create();
+                    $deletedMovies = Movie::factory($deletedCount)->create();
 
-                $response = $this->getJson(self::MOVIES_URI)->assertOk();
-                $returnedIds = array_map(fn($m) => $m['id'], $response->json('movies'));
+                    foreach ($deletedMovies as $movie) {
+                        $movie->delete();
+                    }
 
-                // Deleted movies should not be in results
-                foreach ($deletedMovies as $movie) {
-                    $this->assertNotContains($movie->id, $returnedIds);
-                }
+                    $response = $this->getJson(self::MOVIES_URI)->assertOk();
+                    $returnedIds = array_map(fn ($m) => $m['id'], $response->json('movies'));
 
-                // Active movies should be in results
-                foreach ($activeMovies as $movie) {
-                    $this->assertContains($movie->id, $returnedIds);
+                    // Deleted movies should not be in results
+                    foreach ($deletedMovies as $movie) {
+                        $this->assertNotContains($movie->id, $returnedIds);
+                    }
+
+                    // Active movies should be in results
+                    foreach ($activeMovies as $movie) {
+                        $this->assertContains($movie->id, $returnedIds);
+                    }
+                } finally {
+                    DB::rollBack();
                 }
             });
     }
@@ -343,11 +346,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_show_never_returns_soft_deleted_movies(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function () {
+            ->then(function (): void {
                 $movie = Movie::factory()->create();
                 $movie->delete();
 
@@ -365,11 +366,9 @@ final class MovieControllerPropertyTest extends TestCase
     public function test_index_and_show_return_same_movie_fields(): void
     {
         $this->forAll(
-            Generator\strings()
-                ->withMaxSize(100)
-                ->filter(fn($s) => strlen($s) > 0)
+            suchThat(fn ($s) => strlen($s) > 0, string())
         )
-            ->then(function () {
+            ->then(function (): void {
                 $movie = Movie::factory()->create();
 
                 $indexResponse = $this->getJson(self::MOVIES_URI)->json('movies.0');
@@ -396,4 +395,3 @@ final class MovieControllerPropertyTest extends TestCase
         return Admin::factory()->forUser($user)->create();
     }
 }
-
